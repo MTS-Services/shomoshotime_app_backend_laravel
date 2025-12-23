@@ -15,9 +15,6 @@ class BaseRequest extends FormRequest
         $errors = $validator->errors();
         $response = response()->json([
             'success' => false,
-            // 'message' => 'Invalid data sent',
-            // 'message' => implode(' ', $errors->all()),
-            // 'token' => null,
             'data' => $errors->messages(),
         ], Response::HTTP_UNPROCESSABLE_ENTITY);
         throw new HttpResponseException($response);

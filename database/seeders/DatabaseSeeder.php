@@ -15,14 +15,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
-            ApplicationSettingSeeder::class,
-            UserProfileSeeder::class,
-            CompanyInformationSeeder::class,
-            AreaSeeder::class,
-            CategorySeeder::class,
-            PropertyTypeSeeder::class,
-            PropertySeeder::class,
-            PropertyImageSeeder::class,
         ]);
     }
 }

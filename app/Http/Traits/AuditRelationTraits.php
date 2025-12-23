@@ -15,9 +15,4 @@ trait AuditRelationTraits
     {
         return $model->updater_admin ? $model->updater_admin?->name : ($model->updater ? $model->updater?->name : "N/A");
     }
-
-    protected function deleter_name($model): string
-    {
-        return $model->deleter_admin ? $model->deleter_admin?->name : ($model->deleter ? $model->deleter?->name : "N/A");
-    }
 }

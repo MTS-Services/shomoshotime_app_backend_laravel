@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
         then: function () {
-            Route::middleware(['auth:api', 'phone-verified'])
+            Route::middleware(['auth:api', 'email-verified'])
                 ->prefix('api/v1')
                 ->name('api.v1.')
                 ->group(base_path('routes/api/v1/authenticated.php'));
@@ -33,7 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
         $middleware->alias([
             'auth' => Authenticate::class,
-            'phone-verified' => App\Http\Middleware\PhoneVerified::class,
+            'email-verified' => App\Http\Middleware\EmailVerified::class,
             'admin' => App\Http\Middleware\AdminMidelware::class,
 
         ]);

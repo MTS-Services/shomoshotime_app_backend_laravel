@@ -24,21 +24,8 @@ class LoginRequest extends BaseRequest
     {
         return [
             'fcm_token' => ['nullable', 'string'],
-            'phone' => ['required', new KuwaitPhoneNumber()],
+            'email' => ['required', 'email', 'exists:users,email'],
             'password' => ['required', 'string'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            // Phone field messages
-            'phone.required' => __('validation.phone.required'),
-
-            // Password field messages
-            'password.required' => __('validation.password.required'),
-            'password.string' => __('validation.password.string'),
-            'password.min' => __('validation.password.min'),
         ];
     }
 }

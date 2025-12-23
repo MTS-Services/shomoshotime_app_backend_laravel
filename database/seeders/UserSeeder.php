@@ -14,46 +14,21 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         User::create([
-            'name' => 'مسؤل',
+            'name' => 'Test User',
             'email_verified_at' => now(),
-            'phone_verified_at' => now(),
-            'phone' => '+96550000001',
             'status' => User::STATUS_ACTIVE,
-            'user_type' => User::USER_TYPE_ADMIN,
-            'language_preference' => User::LANGUAGE_ARABIC,
+            'email' => 'user@dev.com',
+            'password' => 'user@dev.com',
+            'is_admin' => User::NOT_ADMIN,
+        ]);
+        User::create([
+            'name' => 'Test Admin',
+            'email_verified_at' => now(),
+            'status' => User::STATUS_ACTIVE,
             'email' => 'admin@dev.com',
             'password' => 'admin@dev.com',
             'is_admin' => User::ADMIN,
         ]);
-        User::create([
-            'name' => 'مشرف الاختبار',
-            'phone' => '+96550000002',
-            'status' => User::STATUS_ACTIVE,
-            'user_type' => User::USER_TYPE_ADMIN,
-            'language_preference' => User::LANGUAGE_ARABIC,
-            'email' => 'testadmin@dev.com',
-            'password' => 'testadmin@dev.com',
-            'is_admin' => User::ADMIN,
-        ]);
-        User::create([
-            'name' => 'مستخدم',
-            'phone' => '+96550000003',
-            'email_verified_at' => now(),
-            'phone_verified_at' => now(),
-            'user_type' => User::USER_TYPE_INDIVIDUAL,
-            'language_preference' => User::LANGUAGE_ARABIC,
-            'status' => User::STATUS_ACTIVE,
-            'email' => 'user@dev.com',
-            'password' => 'user@dev.com',
-        ]);
-        User::create([
-            'name' => 'اختبار المستخدم',
-            'phone' => '+96550000004',
-            'status' => User::STATUS_ACTIVE,
-            'user_type' => User::USER_TYPE_INDIVIDUAL,
-            'language_preference' => User::LANGUAGE_ARABIC,
-            'email' => 'testuser@dev.com',
-            'password' => 'testuser@dev.com',
-        ]);
+
     }
 }

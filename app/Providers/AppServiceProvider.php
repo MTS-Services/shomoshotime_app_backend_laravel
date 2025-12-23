@@ -33,9 +33,8 @@ class AppServiceProvider extends ServiceProvider
         Passport::defaultScopes([
             'user:read',
         ]);
-       
+
         Blade::componentNamespace('App\\View\\Components\\Frontend', 'frontend');
-        Blade::componentNamespace('App\\View\\Components\\Admin', 'admin');
-        
+
     }
 }

@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Models\UserDevice;
 use App\Services\AuthenticationService;
 use App\Services\FirebaseNotificationService;
-use App\Services\PhoneTokenService;
+use App\Services\EmailTokenService;
 use App\Services\SMS\DezSmsService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -28,16 +28,14 @@ use Illuminate\Support\Str;
 class AuthenticationController extends Controller
 {
     protected AuthenticationService $authService;
-    protected PhoneTokenService $phoneTokenService;
+    protected EmailTokenService $emailTokenService;
     protected FirebaseNotificationService $firebaseNotificationService;
-    protected DezSmsService $dezSmsService;
 
-    public function __construct(AuthenticationService $authService, PhoneTokenService $phoneTokenService, FirebaseNotificationService $firebaseNotificationService, DezSmsService $dezSmsService)
+    public function __construct(AuthenticationService $authService, EmailTokenService $emailTokenService, FirebaseNotificationService $firebaseNotificationService)
     {
         $this->authService = $authService;
-        $this->phoneTokenService = $phoneTokenService;
+        $this->emailTokenService = $emailTokenService;
         $this->firebaseNotificationService = $firebaseNotificationService;
-        $this->dezSmsService = $dezSmsService;
     }
 
     /**
@@ -49,7 +47,6 @@ class AuthenticationController extends Controller
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone,
                 'password' => Hash::make($request->password),
                 'last_login_at' => Carbon::now(),
                 'fcm_token' => $request->fcm_token,
@@ -58,7 +55,7 @@ class AuthenticationController extends Controller
             // Store the initial device information for the new user.
             UserDevice::create([
                 'user_id' => $user->id,
-                'device_token' => Str::uuid()->toString(), // Generate a unique token for the device
+                'device_token' => $request->device_token ?? Str::uuid()->toString(), // Generate a unique token for the device
                 'user_agent' => $request->header('User-Agent'),
                 'ip_address' => $request->ip(),
                 'last_login_at' => Carbon::now(),
@@ -71,16 +68,11 @@ class AuthenticationController extends Controller
 
             $this->authService->generateOtp($user);
 
-            $this->dezSmsService->sendSms($user->phone, 'Your OTP is' . $user->otp . '.');
 
-            $message = str_replace(
-                '{phone_ending}',
-                substr($user->phone, -2),
-                __('auth.otp_sent')
-            );
+            $message = "User registered successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
 
             $data = [
-                'phone_verified' => $message,
+                'message' => $message,
                 'otp' => $user->otp,
                 'token' => $token,
                 'token_type' => 'Bearer',
@@ -89,7 +81,7 @@ class AuthenticationController extends Controller
             ];
 
             if ($user->fcm_token != null) {
-                $this->firebaseNotificationService->sendToDevice($user->fcm_token,  'Registration Successful', 'You have successfully registered.');
+                $this->firebaseNotificationService->sendToDevice($user->fcm_token, 'Registration Successful', 'You have successfully registered.');
             }
 
             return sendResponse(true, __('registration.success'), $data, Response::HTTP_CREATED);
@@ -105,23 +97,23 @@ class AuthenticationController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         try {
-            $user = User::where('phone', $request->phone)->first();
+            $user = User::where('email', $request->email)->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 throw ValidationException::withMessages([
-                    'phone' => [__('auth.invalid_credentials')],
+                    'email' => ['The provided email or password is incorrect.'],
                 ]);
             }
 
             if ($user->status == User::STATUS_SUSPENDED) {
                 throw ValidationException::withMessages([
-                    'phone' => [__('auth.account_suspended')],
+                    'email' => ['Your account has been suspended. Please contact support.'],
                 ]);
             }
 
             if ($user->is_admin == User::ADMIN) {
                 throw ValidationException::withMessages([
-                    'phone' => [__('auth.invalid_credentials')],
+                    'email' => ['You are not allowed to login as admin.'],
                 ]);
             }
 
@@ -150,19 +142,14 @@ class AuthenticationController extends Controller
             $verified = $this->authService->isVerified($user);
             if (!$verified) {
                 $this->authService->generateOtp($user);
-                $this->dezSmsService->sendSms($user->phone, 'Your OTP is' . $user->otp . '.');
             }
 
-            $phoneVerifiedMessage = $verified
-                ? __('auth.phone_verified')
-                : str_replace(
-                    '{phone_ending}',
-                    substr($user->phone, -2),
-                    __('auth.phone_unverified')
-                );
+            $message = $verified
+                ? "User logged in successfully."
+                : "User logged in successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
 
             $data = [
-                'phone_verified' => $phoneVerifiedMessage,
+                'message' => $message,
                 'otp' => $verified ? null : $user->otp,
                 'token' => $token,
                 'token_type' => 'Bearer',
@@ -179,7 +166,7 @@ class AuthenticationController extends Controller
                 );
             }
 
-            return sendResponse(true, __('login.success'), $data, Response::HTTP_OK);
+            return sendResponse(true, 'Logged in successfully', $data, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -197,9 +184,9 @@ class AuthenticationController extends Controller
                 $request->user()->token()->revoke();
                 // Optionally delete the user device record to enforce a new login on next attempt
                 $request->user()->userDevice()->delete();
-                return sendResponse(true, __('logout.success'), null, Response::HTTP_OK);
+                return sendResponse(true, __('Logged out successfully'), null, Response::HTTP_OK);
             }
-            return sendResponse(false, __('auth.unauthenticated'), null, Response::HTTP_UNAUTHORIZED);
+            return sendResponse(false, __('Unauthenticated'), null, Response::HTTP_UNAUTHORIZED);
         } catch (Throwable $error) {
             Log::error($error);
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -214,13 +201,13 @@ class AuthenticationController extends Controller
         try {
             $user = $request->user();
             $this->authService->verifyOtp($user, $request->otp);
-            $user->update(['phone_verified_at' => Carbon::now()]);
+            $user->update(['email_verified_at' => Carbon::now()]);
 
             if ($user->fcm_token != null) {
                 $this->firebaseNotificationService->sendToDevice($user->fcm_token, 'OTP Verified', 'Your OTP has been verified successfully.');
             }
 
-            return sendResponse(true, __('otp.verified'), null, Response::HTTP_OK);
+            return sendResponse(true, __('OTP verified'), null, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -228,15 +215,14 @@ class AuthenticationController extends Controller
     }
 
     /**
-     * Resend a new OTP to the user's phone.
+     * Resend a new OTP to the user's email.
      */
     public function resendOTP(Request $request): JsonResponse
     {
         try {
             $user = $request->user();
             $this->authService->resendOtp($user);
-            $this->dezSmsService->sendSms($user->phone, 'Your OTP is' . $user->otp . '.');
-            $message = __('otp.resent', ['phone_ending' => substr($user->phone, -2)]);
+            $message = 'A new one-time password (OTP) has been sent to your email ending in ***' . substr($user->email, -2) . '.';
             $otp = $user->otp;
 
             return sendResponse(true, $message, $otp, Response::HTTP_OK);
@@ -260,7 +246,7 @@ class AuthenticationController extends Controller
                 $this->firebaseNotificationService->sendToDevice($user->fcm_token, 'Password Changed', 'Your password has been changed successfully.');
             }
 
-            return sendResponse(true, __('password.changed'), null, Response::HTTP_OK);
+            return sendResponse(true, __('Password changed successfully'), null, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -273,11 +259,10 @@ class AuthenticationController extends Controller
     public function forgotPassword(Request $request): JsonResponse
     {
         try {
-            $user = $this->authService->verifyPhone($request->phone, User::NOT_ADMIN);
+            $user = $this->authService->verifyEmail($request->email);
             $this->authService->generateOtp($user);
-            $this->dezSmsService->sendSms($user->phone, 'Your OTP is' . $user->otp . '.');
-            $token = $this->phoneTokenService->createToken($user);
-            $message = __('password.reset_otp_sent', ['phone_ending' => substr($user->phone, -2)]);
+            $token = $this->emailTokenService->createToken($user);
+            $message = "An OTP has been sent to your email ending in ***" . substr($user->email, -2) . ".";
             return sendResponse(true, $message, ['token' => $token, 'otp' => $user->otp], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
@@ -291,14 +276,13 @@ class AuthenticationController extends Controller
     public function forgotResendOTP(Request $request): JsonResponse
     {
         try {
-            $user = $this->authService->verifyPhone($request->phone, User::NOT_ADMIN);
-            $verify = $this->phoneTokenService->verifyToken($user, $request->token);
+            $user = $this->authService->verifyEmail($request->email);
+            $verify = $this->emailTokenService->verifyToken($user, $request->token);
             if (!$verify) {
-                throw new \Exception(__('auth.invalid_token'));
+                throw new \Exception("Invalid token");
             }
             $this->authService->resendOtp($user);
-            $this->dezSmsService->sendSms($user->phone, 'Your OTP is' . $user->otp . '.');
-            $message = __('otp.resent', ['phone_ending' => substr($user->phone, -2)]);
+            $message = "A new one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
             return sendResponse(true, $message, ['token' => $request->token, 'otp' => $user->otp], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
@@ -312,12 +296,12 @@ class AuthenticationController extends Controller
     public function forgotVerifyOTP(OTPRequest $request): JsonResponse
     {
         try {
-            $user = $this->authService->verifyPhone($request->phone, User::NOT_ADMIN);
-            $verify = $this->phoneTokenService->verifyToken($user, $request->token);
+            $user = $this->authService->verifyEmail($request->email);
+            $verify = $this->emailTokenService->verifyToken($user, $request->token);
             if (!$verify) {
-                throw new \Exception(__('auth.invalid_token'));
+                throw new \Exception("Invalid token");
             }
-            return sendResponse(true, __('otp.verified'), ['token' => $request->token], Response::HTTP_OK);
+            return sendResponse(true, "OTP verified", ['token' => $request->token], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -330,16 +314,16 @@ class AuthenticationController extends Controller
     public function ResetPassword(PasswordRequest $request): JsonResponse
     {
         try {
-            $user = $this->authService->verifyPhone($request->phone, User::NOT_ADMIN);
-            $this->phoneTokenService->verifyToken($user, $request->token);
+            $user = $this->authService->verifyEmail($request->email);
+            $this->emailTokenService->verifyToken($user, $request->token);
             $this->authService->resetPassword($user, $request->password);
-            $this->phoneTokenService->deleteToken($user);
+            $this->emailTokenService->deleteToken($user);
 
             if ($user->fcm_token != null) {
                 $this->firebaseNotificationService->sendToDevice($user->fcm_token, 'Password Reset', 'Your password has been reset successfully.');
             }
 
-            return sendResponse(true, __('password.reset_success'), null, Response::HTTP_OK);
+            return sendResponse(true, "Password reset successfully", null, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);

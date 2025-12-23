@@ -2,14 +2,12 @@
 
 use App\Http\Traits\AuditColumnsTrait;
 use App\Models\User;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    use SoftDeletes, AuditColumnsTrait;
+return new class extends Migration {
+    use AuditColumnsTrait;
     /**
      * Run the migrations.
      */
@@ -19,15 +17,10 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('sort_order')->default(0);
 
-            $table->string('email', 255)->unique()->nullable();
-            $table->string('phone')->unique();
-
-            $table->string('password', 255);
             $table->string('name')->nullable();
+            $table->string('email', 255)->unique();
+            $table->string('password', 255);
             $table->string('image')->nullable();
-
-            $table->tinyInteger('user_type')->default(User::USER_TYPE_INDIVIDUAL);
-            $table->tinyInteger('language_preference')->default(User::LANGUAGE_ARABIC);
             $table->tinyInteger('status')->default(User::STATUS_ACTIVE);
 
             $table->string('otp', 4)->nullable();
@@ -35,22 +28,20 @@ return new class extends Migration
             $table->dateTime('otp_expires_at')->nullable();
 
             $table->timestamp('email_verified_at')->nullable();
-            $table->timestamp('phone_verified_at')->nullable();
             $table->timestamp('last_login_at')->nullable();
 
             $table->boolean('is_admin')->default(User::NOT_ADMIN);
-            $table->boolean('is_banned')->default(User::NOT_BANNED);
 
             $table->string('fcm_token')->nullable();
+            $table->string('google_id')->nullable();
             $table->rememberToken();
 
             $table->timestamps();
-            $table->softDeletes();
             $this->addAuditColumns($table);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('phone')->primary();
+            $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });

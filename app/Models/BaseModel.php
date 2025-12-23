@@ -13,11 +13,9 @@ class BaseModel extends Model
     protected $appends = [
         'created_at_human',
         'updated_at_human',
-        'deleted_at_human',
 
         'created_at_formatted',
         'updated_at_formatted',
-        'deleted_at_formatted',
     ];
 
     /* ===================== ===================== ===================== =====================
@@ -34,15 +32,6 @@ class BaseModel extends Model
         return $this->belongsTo(User::class, 'updated_by', 'id');
     }
 
-    public function deleter()
-    {
-        return $this->belongsTo(User::class, 'deleted_by', 'id');
-    }
-
-    public function profile()
-    {
-        return $this->hasOne(UserProfile::class, 'user_id', 'id');
-    }
     public function getCreatedAtFormattedAttribute()
     {
         return timeFormat($this->created_at);
@@ -55,11 +44,6 @@ class BaseModel extends Model
     }
 
     // Accessor for deleted time
-    public function getDeletedAtFormattedAttribute()
-    {
-        return $this->deleted_at ? timeFormat($this->deleted_at) : 'N/A';
-    }
-
     // Accessor for created time human readable
     public function getCreatedAtHumanAttribute()
     {
@@ -70,11 +54,5 @@ class BaseModel extends Model
     public function getUpdatedAtHumanAttribute()
     {
         return $this->created_at != $this->updated_at ? timeFormatHuman($this->updated_at) : 'N/A';
-    }
-
-    // Accessor for deleted time human readable
-    public function getDeletedAtHumanAttribute()
-    {
-        return $this->deleted_at ? timeFormatHuman($this->deleted_at) : 'N/A';
     }
 }

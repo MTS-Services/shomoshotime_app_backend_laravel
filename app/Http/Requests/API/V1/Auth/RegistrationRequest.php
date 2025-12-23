@@ -25,30 +25,8 @@ class RegistrationRequest extends BaseRequest
         return [
             'fcm_token' => ['required', 'string'],
             'name' => ['sometimes', 'required', 'string', 'min:3', 'max:50'],
-            'phone' => ['required', 'unique:users', new KuwaitPhoneNumber()],
-            'email' => ['nullable', 'email', 'unique:users'],
+            'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'confirmed'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'name.string' => __('validation.name.string'),
-            'name.min' => __('validation.name.min'),
-            'name.max' => __('validation.name.max'),
-
-            'phone.required' => __('validation.phone.required'),
-            'phone.unique' => __('validation.phone.unique'),
-
-            'email.required' => __('validation.email.required'),
-            'email.email' => __('validation.email.email'),
-            'email.unique' => __('validation.email.unique'),
-
-            'password.required' => __('validation.password.required'),
-            'password.string' => __('validation.password.string'),
-            'password.min' => __('validation.password.min'),
-            'password.confirmed' => __('validation.password.confirmed'),
         ];
     }
 }

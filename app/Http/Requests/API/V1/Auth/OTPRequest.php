@@ -25,13 +25,4 @@ class OTPRequest extends BaseRequest
             'otp' => 'required|numeric|digits:4'
         ];
     }
-
-    public function messages(): array
-    {
-        return [
-            'otp.required' => __('validation.otp.required'),
-            'otp.numeric' => __('validation.otp.numeric'),
-            'otp.digits' => __('validation.otp.digits'),
-        ];
-    }
 }

@@ -38,7 +38,7 @@ class AuthenticationService
 
         $user->refresh();
 
-        Log::info("OTP for user id: {$user->id}, Name: {$user->name}, Phone Number: ({$user->phone}) is: {$user->otp}");
+        Log::info("OTP for user id: {$user->id}, Name: {$user->name}, Email: {$user->email}, OTP is: {$user->otp}, Expires at: {$user->otp_expires_at}");
 
         return $user;
     }
@@ -58,7 +58,7 @@ class AuthenticationService
             ->first();
 
         if (!$record) {
-            throw new \Exception(__('otp.invalid'));
+            throw new \Exception(__('Invalid OTP'));
         }
 
         $record->update(['otp' => null, 'otp_expires_at' => null, 'otp_sent_at' => null]);
@@ -83,13 +83,13 @@ class AuthenticationService
      * @param User $user The user to resend OTP to.
      * @return array An array indicating if blocked and a message.
      */
-    public function resendOtp(User $user)
+    public function resendOtp(User $user): void
     {
         $key = "otp_resend_attempts:{$user->id}";
         $blockedKey = "otp_blocked:{$user->id}";
 
         if (Cache::has($blockedKey)) {
-            throw new \Exception(__('otp.resend_limit_exceeded', ['block_minutes' => $this->blockMinutes]));
+            throw new \Exception(__('Request limit exceeded', ['block_minutes' => $this->blockMinutes]));
         }
 
         $attempts = Cache::get($key, 0) + 1;
@@ -98,45 +98,28 @@ class AuthenticationService
         if ($attempts > $this->maxAttempts) {
             Cache::put($blockedKey, true, Carbon::now()->addMinutes($this->blockMinutes));
             Cache::forget($key);
-            throw new \Exception(__('otp.resend_limit_exceeded', ['block_minutes' => $this->blockMinutes]));
+            throw new \Exception(__('Request limit exceeded', ['block_minutes' => $this->blockMinutes]));
         }
         $this->generateOtp($user);
     }
 
 
-    public function verifyPhone(string $phone, $expectedUserType = null): User
+    public function verifyEmail(string $email): User
     {
-        $userQuery = User::where('phone', $phone);
-
-        if ($expectedUserType !== null) {
-            if ($expectedUserType === User::NOT_ADMIN || $expectedUserType === User::ADMIN) {
-                $userQuery->where('is_admin', (bool)$expectedUserType);
-            } else if ($expectedUserType === User::USER_TYPE_INDIVIDUAL) {
-                $userQuery->where('user_type', User::USER_TYPE_INDIVIDUAL);
-            } else if ($expectedUserType === User::USER_TYPE_AGENT) {
-                $userQuery->where('user_type', User::USER_TYPE_AGENT);
-            } else {
-                throw new \Exception(__('user.invalid_type'));
-            }
-        }
-
+        $userQuery = User::where('email', $email);
         $user = $userQuery->first();
 
         if (!$user) {
-            $message = __('user.not_found');
-            if ($expectedUserType === User::ADMIN) {
-                $message = __('user.admin_not_found');
-            }
+            $message = __('User not found with the provided email.');
             throw new ModelNotFoundException($message);
         }
-
         return $user;
     }
 
     public function verifyPassword(User $user, string $password): void
     {
         if (!Hash::check($password, $user->password)) {
-            throw new \Exception(__('password.invalid'));
+            throw new \Exception(__('Invalid Password'));
         }
     }
 

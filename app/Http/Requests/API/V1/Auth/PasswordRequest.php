@@ -22,16 +22,8 @@ class PasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'old_password' => ['sometimes', 'required', 'string', 'min:8'],
             'password' => ['required', 'string', 'min:8', 'confirmed']
-        ];
-    }
-    public function messages(): array
-    {
-        return [
-            'password.required' => __('validation.password.required'),
-            'password.string' => __('validation.password.string'),
-            'password.min' => __('validation.password.min'),
-            'password.confirmed' => __('validation.password.confirmed'),
         ];
     }
 }
