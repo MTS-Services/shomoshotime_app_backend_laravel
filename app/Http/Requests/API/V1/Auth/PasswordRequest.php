@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Http\Requests\API\V1\Auth;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class PasswordRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'password' => ['required', 'string', 'min:8', 'confirmed']
+        ];
+    }
+    public function messages(): array
+    {
+        return [
+            'password.required' => __('validation.password.required'),
+            'password.string' => __('validation.password.string'),
+            'password.min' => __('validation.password.min'),
+            'password.confirmed' => __('validation.password.confirmed'),
+        ];
+    }
+}

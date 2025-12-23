@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "skywalker-notification",
+  "private_key_id": "54f6dfc0344591b9e1cd7d30e0a47773005720b0",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDwS7m0FZfaHT0j\n4fLMRkW5PtSWoOoeKH+GO8/RSZ4RbS1avPc/kCRupB26XUx66h2vINxfcSbjgL/4\nz9fAlfZnfF+phdkCVEVm9al4Ha5hHWaa9ya8avOnsO7aoteAGjp/18/H4AdLQeVb\nAdldFwRBn+Dgo0kkcjRm9KDS+SILH8bnvMuh+QEoyXWfUdyrLo6f9gw53Hbo1Nks\nITZ11Pf4k95UElieTduv8IAAmvfbOODlF+IXKGSYPQbR7G+srdTpaCXtHC9Mo6e2\nZ03C6OqzMitL8AHvlBZH0LL+OzTAoOiiZXhge1/jtmxWrVY3BBN+kQR3nK0sh5gT\nacaLV3btAgMBAAECggEAH47iaas4UTXr1K2U9Iz6FTUSOGITvTg2X0u1pFfVwZYk\nEbmlgxyMHFfDa7lbFP1wPpLDPmme4NwE2kl5nVpUjQzBh4MDmBG3N6llw1eqkiiJ\nVCrHVJF7RHexNteSE8neCvIt4KMkchbKZ2RbxqUCMxgrMXVgYr/479iK0opTlUAq\n+cFywRzu1a3SpJuPtMT5WNkBUs8Q9lrYfPIODj3uM/6oGDG9YlZIDu9iJQMJDwGI\nVDTJmB2C7GRM52OAodkBd4mOQMmNz5l/DBRxo+CYVOar9+vAL0x+W03DqBkaQ5dt\nlNBEInU8FZnMZmyN1Bq6pD3rvFZDaomPmWTOQxPpxQKBgQD6hNo9I54iX+c0Is9g\n4Afs/Cvp/OcHQdHVGLQhO8eaYxolj4pciMNBXXgXUxTHAqqbQrwWjSGTdNO6FcCT\nITMKNZ6RlaSXTT2Yi0RTz/7S736EdFjuxml9nKRqqjApFaPXEwy0puF7qx6bMVaG\nXGyGu+fhhIRNCuV72a4VBJeP9wKBgQD1jZ0IETTjw2vWosh9Y818yxHmKY33W7Un\nHp+HA/q7qfkFJxrtxn5tE4VBb0vF41W/+dR4JFxyUd0U07dEdRBkEm4Bm6yUESVw\nDgh7xL71fEnFCyxaXVh4fhQh2Dqu96VhYjN31BdkTOGjwEXhaZxQ+jRORx6wPF+C\n10z/2AC/OwKBgHEqtH9r6JJ0qjfGBdIoQcxPOfMweJixpf1SdISSwZ8/Z19SUVlt\num57r7UxpbAkxzbt1ZOGW4WF/+MO0nhkRe81u5TeeYSTsuCHAO2vhth4sblZ6Zar\ncJn6udcpXCojCWktxM6SmEdKTMAkcIavl6LhnWUlfLJk2rew5M+/zEuPAoGAQCnp\n/6KnZGC7PBG7O/CpUFOr8K2pGBrRolBBNUGX8hO/K1aFld5JSO1R48BWV3ZJAOoi\nV+aAdarojzmnaO8CAnRCZI8uMF6unrI8C0Nk9rasfB2oUFCV/p5LWnCrHO8/Oswz\nULuOBTqFt4lVeUpke1B1/IJfBYQxHPpvd2cVAuMCgYARiefypJgbtfZGAoxI7P2u\n+XG5SzzadOtKFyGQPfJk5VJIAElQIYUeLxjCbLnw4PrOIOmNP012zaAmMyUHpHfX\nN334uX3rp/sSuKql2tK3xTAxAGN7u7jlsKAqpmKWUz9HZqFtOopWWGAtYYlk1btC\nANVt6FaHWpJihX3spboDCQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@skywalker-notification.iam.gserviceaccount.com",
+  "client_id": "108358373780890061144",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40skywalker-notification.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
