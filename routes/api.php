@@ -8,11 +8,13 @@ Route::controller(AuthenticationController::class)->name('v1.auth.')->prefix('v1
     Route::post('/register', 'register')->name('register');
     Route::post('/login', 'login')->name('login');
 
+    Route::post('/forgot-password', 'forgotPassword')->name('forgot-password');
+    Route::post('/reset-password', 'ResetPassword')->name('reset-password');
+
     Route::post('/forgot-verify-otp', 'forgotVerifyOTP')->name('forgot-verify-otp');
     Route::post('/forgot-resend-otp', 'forgotResendOTP')->name('forgot-resend-otp');
 
-    Route::post('/forgot-password', 'forgotPassword')->name('forgot-password');
-    Route::post('/reset-password', 'ResetPassword')->name('reset-password');
+
 });
 
 // Protected routes
