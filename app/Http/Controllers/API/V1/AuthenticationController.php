@@ -111,11 +111,11 @@ class AuthenticationController extends Controller
                 ]);
             }
 
-            if ($user->is_admin == User::ADMIN) {
-                throw ValidationException::withMessages([
-                    'email' => ['You are not allowed to login as admin.'],
-                ]);
-            }
+            // if ($user->is_admin == User::ADMIN) {
+            //     throw ValidationException::withMessages([
+            //         'email' => ['You are not allowed to login as admin.'],
+            //     ]);
+            // }
 
             // Single update for user data
             $user->update([
@@ -301,6 +301,7 @@ class AuthenticationController extends Controller
             if (!$verify) {
                 throw new \Exception("Invalid token");
             }
+            $this->authService->verifyOtp($user, $request->otp);
             return sendResponse(true, "OTP verified", ['token' => $request->token], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);

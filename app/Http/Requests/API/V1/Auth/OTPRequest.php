@@ -22,7 +22,9 @@ class OTPRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'otp' => 'required|numeric|digits:4'
+            'otp' => 'required|numeric|digits:4',
+            'email' => 'sometimes|required|email',
+            'token' => 'sometimes|required|string',
         ];
     }
 }
