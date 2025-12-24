@@ -23,7 +23,8 @@ class PasswordRequest extends FormRequest
     {
         return [
             'old_password' => ['sometimes', 'required', 'string', 'min:8'],
-            'password' => ['required', 'string', 'min:8', 'confirmed']
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'email' => ['sometimes', 'required', 'email'],
         ];
     }
 }
