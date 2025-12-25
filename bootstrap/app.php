@@ -16,10 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
         then: function () {
-            Route::middleware(['auth:api', 'email-verified'])
-                ->prefix('api/v1')
-                ->name('api.v1.')
-                ->group(base_path('routes/api/v1/authenticated.php'));
+            Route::middleware(['auth:api', 'email-verified', 'admin'])
+                ->prefix('api/v1/admin')
+                ->name('api.v1.admin.')
+                ->group(base_path('routes/api/v1/admin.php'));
+            Route::middleware(['auth:api', 'email-verified', 'user'])
+                ->prefix('api/v1/user')
+                ->name('api.v1.user.')
+                ->group(base_path('routes/api/v1/user.php'));
 
             Route::prefix('api/v1')
                 ->name('api.v1.')
@@ -35,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => Authenticate::class,
             'email-verified' => App\Http\Middleware\EmailVerified::class,
             'admin' => App\Http\Middleware\AdminMidelware::class,
+            'user' => App\Http\Middleware\UserMidelware::class,
 
         ]);
         $middleware->web(MultiLangSet::class);

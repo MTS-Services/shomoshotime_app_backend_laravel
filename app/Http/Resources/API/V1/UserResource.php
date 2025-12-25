@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Http\Resources\API\V1\UserManagement;
+namespace App\Http\Resources\API\V1;
 
-use App\Http\Resources\API\V1\PropertyManagement\PropertyResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,6 +21,7 @@ class UserResource extends JsonResource
             'email' => $this->email ?? 'N/A',
             'image' => $this->image ?? 'N/A',
             'status' => $this->status,
+            'is_admin' => $this->is_admin,
             'status_label' => $this->status_label,
             'status_data' => User::getStatusList(),
             'email_verified_at' => $this->email_verified_at,
@@ -30,6 +30,7 @@ class UserResource extends JsonResource
             'updated_at' => $this->updated_at_formatted,
             'creater_name' => $this->creater?->name ?? 'N/A',
             'updater_name' => $this->updater?->name ?? 'N/A',
+
         ];
     }
 }

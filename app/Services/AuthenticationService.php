@@ -74,7 +74,7 @@ class AuthenticationService
      */
     public function isVerified(User $user): bool
     {
-        return $user->phone_verified_at !== null;
+        return $user->email_verified_at !== null;
     }
 
     /**

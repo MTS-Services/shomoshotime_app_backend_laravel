@@ -21,7 +21,6 @@ class EmailVerified
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-
         if (!$user) {
             if ($request->expectsJson()) {
                 return sendResponse(false, __('auth.unauthenticated'), null, Response::HTTP_UNAUTHORIZED);
@@ -34,30 +33,13 @@ class EmailVerified
             return Redirect::guest(route('login'));
         }
 
-        if ($user->is_banned) {
-            Auth::logout();
-
-            if ($request->expectsJson()) {
-                return sendResponse(false, __('auth.account_suspended'), null, Response::HTTP_UNAUTHORIZED);
-            }
-            if ($request->is('api/*')) {
-                return sendResponse(false, __('auth.account_suspended'), null, Response::HTTP_UNAUTHORIZED);
-            }
-
-            session()->flash('error', __('auth.account_suspended'));
-            return Redirect::guest(route('login'));
-        }
 
         if (!$this->authService->isVerified($user)) {
             $this->authService->generateOtp($user);
 
-            $message = str_replace(
-                '{phone_ending}',
-                substr($user->phone, -2),
-                __('auth.phone_unverified')
-            );
+            $message = "Your email is not verified. A verification code has been sent to your email ending in ***" . substr($user->email, -2) . ".";
             if ($request->expectsJson()) {
-                return response()->json(['message' => $message, 'phone' => 'Not verified'], Response::HTTP_UNAUTHORIZED);
+                return response()->json(['message' => $message, 'status' => 'Not verified'], Response::HTTP_UNAUTHORIZED);
             }
             if ($request->is('api/*')) {
                 return sendResponse(false, $message, null, Response::HTTP_UNAUTHORIZED);
