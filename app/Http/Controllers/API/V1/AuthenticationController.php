@@ -111,11 +111,6 @@ class AuthenticationController extends Controller
                 ]);
             }
 
-            // if ($user->is_admin == User::ADMIN) {
-            //     throw ValidationException::withMessages([
-            //         'email' => ['You are not allowed to login as admin.'],
-            //     ]);
-            // }
 
             // Single update for user data
             $user->update([
@@ -150,7 +145,9 @@ class AuthenticationController extends Controller
 
             $data = [
                 'message' => $message,
-                'otp' => $verified ? null : $user->otp,
+                'name' => $user->name,
+                'email' => $user->email,
+                'otp' => $verified ? "Verified" : $user->otp,
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => $expiresInSeconds,

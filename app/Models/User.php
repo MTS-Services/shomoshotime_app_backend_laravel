@@ -223,4 +223,9 @@ class User extends Authenticatable implements OAuthenticatable, MustVerifyEmail
     {
         return auth_storage_url($this->image);
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->is_admin == self::ADMIN;
+    }
 }
