@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-class AdminMidelware
+class UserMidelware
 {
     /**
      * Handle an incoming request.
@@ -19,8 +19,8 @@ class AdminMidelware
         if (!Auth::guard('api')->check()) {
             return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
         }
-        if ($request->user()->is_admin == 0) {
-            return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+        if ($request->user()->is_admin == 1) {
+            return sendResponse(false, 'User access required', null, Response::HTTP_UNAUTHORIZED);
         }
         return $next($request);
     }
