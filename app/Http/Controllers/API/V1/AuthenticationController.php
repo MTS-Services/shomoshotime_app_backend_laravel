@@ -7,6 +7,7 @@ use App\Http\Requests\API\V1\Auth\LoginRequest;
 use App\Http\Requests\API\V1\Auth\OTPRequest;
 use App\Http\Requests\API\V1\Auth\RegistrationRequest;
 use App\Http\Requests\API\V1\Auth\PasswordRequest;
+use App\Mail\OtpMail;
 use App\Models\User;
 use App\Models\UserDevice;
 use App\Services\AuthenticationService;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
@@ -67,6 +69,8 @@ class AuthenticationController extends Controller
             $expiresInSeconds = Carbon::now()->diffInSeconds($tokenModel->expires_at);
 
             $this->authService->generateOtp($user);
+
+            Mail::to($user->email)->send(new OtpMail($user, $user->otp));
 
 
             $message = "User registered successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
@@ -137,6 +141,7 @@ class AuthenticationController extends Controller
             $verified = $this->authService->isVerified($user);
             if (!$verified) {
                 $this->authService->generateOtp($user);
+                Mail::to($user->email)->send(new OtpMail($user, $user->otp));
             }
 
             $message = $verified
@@ -222,6 +227,8 @@ class AuthenticationController extends Controller
             $message = 'A new one-time password (OTP) has been sent to your email ending in ***' . substr($user->email, -2) . '.';
             $otp = $user->otp;
 
+            Mail::to($user->email)->send(new OtpMail($user, $otp));
+
             return sendResponse(true, $message, $otp, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
@@ -260,6 +267,8 @@ class AuthenticationController extends Controller
             $this->authService->generateOtp($user);
             $token = $this->emailTokenService->createToken($user);
             $message = "An OTP has been sent to your email ending in ***" . substr($user->email, -2) . ".";
+
+            Mail::to($user->email)->send(new OtpMail($user, $user->otp));
             return sendResponse(true, $message, ['token' => $token, 'otp' => $user->otp], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
@@ -280,6 +289,7 @@ class AuthenticationController extends Controller
             }
             $this->authService->resendOtp($user);
             $message = "A new one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
+            Mail::to($user->email)->send(new OtpMail($user, $user->otp));
             return sendResponse(true, $message, ['token' => $request->token, 'otp' => $user->otp], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
