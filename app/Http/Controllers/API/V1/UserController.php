@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\API\V1\UserCollection;
 use App\Http\Resources\API\V1\UserResource;
 use App\Services\UserManagement\UserService;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ class UserController extends Controller
             $users = $query->paginate($request->input('per_page', 10));
             $users->setPageName('page');
 
-            return sendResponse(true, 'Users data fetched successfully.', UserResource::collection($users), Response::HTTP_OK);
+            return sendResponse(true, 'Users data fetched successfully.', new UserCollection($users), Response::HTTP_OK);
         } catch (Throwable $e) {
             Log::error('Get Todos Error: ' . $e->getMessage());
             return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
