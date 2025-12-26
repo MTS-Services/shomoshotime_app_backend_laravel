@@ -42,7 +42,7 @@ class OtpMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.user_otp',
+            markdown: 'emails.otp_mail',
         );
     }
 
