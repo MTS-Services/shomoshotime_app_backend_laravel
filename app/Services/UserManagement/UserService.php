@@ -38,6 +38,13 @@ class UserService
         return User::findOrFail($id);
     }
 
+    public function statusChange(User $user, $status)
+    {
+        $user->status = $status;
+        $user->updated_by = request()->user()->id;
+        $user->update();
+    }
+
     // /**
     //  * Create a new user.
     //  *

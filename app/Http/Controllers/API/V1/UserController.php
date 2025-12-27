@@ -50,4 +50,37 @@ class UserController extends Controller
         }
     }
 
+    public function statusChange(Request $request)
+    {
+        try {
+
+            $user = request()->user();
+
+            if (!$user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (!$user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (empty($request->id)) {
+                return sendResponse(false, 'User id required', null, Response::HTTP_UNAUTHORIZED);
+            }
+            if (empty($request->status)) {
+                return sendResponse(false, 'Status field is required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $user = $this->userService->getUser($request->id);
+            if (!$user) {
+                return sendResponse(false, 'User not found', null, Response::HTTP_UNAUTHORIZED);
+            }
+            $this->userService->statusChange($user, $request->status);
+            return sendResponse(true, 'Status changed successfully.', null, Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Get Todos Error: ' . $e->getMessage());
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
