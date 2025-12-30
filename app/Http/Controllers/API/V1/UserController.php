@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\UserCollection;
-use App\Http\Resources\API\V1\UserResource;
 use App\Services\UserManagement\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
