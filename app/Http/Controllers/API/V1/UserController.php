@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\V1\UserRequest;
 use App\Http\Resources\API\V1\UserCollection;
+use App\Models\User;
 use App\Services\UserManagement\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -81,5 +83,86 @@ class UserController extends Controller
 
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public function store(UserRequest $request)
+    {
+        $authUser = $request->user();
+
+        if (! $authUser) {
+            return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (! $authUser->isAdmin()) {
+            return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
+        }
+
+        $validated = $request->validated();
+
+        $user = $this->userService->createUser($validated);
+
+        return sendResponse(
+            true,
+            'User created successfully.',
+            new UserCollection($user),
+            Response::HTTP_CREATED
+        );
+    }
+
+    public function update(UserRequest $request, $id)
+    {
+        $authUser = $request->user();
+
+        if (! $authUser) {
+            return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (! $authUser->isAdmin()) {
+            return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
+        }
+
+        // Fetch the user by ID using findOrFail
+        $user = $this->userService->getUser($id);
+
+        $validated = $request->validated();
+
+        $image = $request->file('image');
+
+        // Update user
+        $updatedUser = $this->userService->updateUser($user, $validated, $image);
+
+        return sendResponse(
+            true,
+            'User updated successfully.',
+            new UserCollection($updatedUser),
+            Response::HTTP_OK
+        );
+    }
+
+    public function delete(Request $request, $id)
+    {
+        $authUser = $request->user();
+
+        if (! $authUser) {
+            return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (! $authUser->isAdmin()) {
+            return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
+        }
+
+        $user = $this->userService->getUser($id);
+        if (! $user) {
+            return sendResponse(false, 'User not found', null, Response::HTTP_NOT_FOUND);
+        }
+
+       $this->userService->deleteUser($user);
+
+        return sendResponse(
+            true,
+            'User deleted successfully.',
+            null,
+            Response::HTTP_OK
+        );
     }
 }
