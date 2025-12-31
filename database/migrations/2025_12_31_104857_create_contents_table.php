@@ -22,9 +22,7 @@ return new class extends Migration
             $table->string('subtitle')->nullable();
             $table->string('category');
 
-            $table->tinyInteger('type')
-                ->default(0)
-                ->comment('0 = study guides, 1 = flashcards');
+            $table->tinyInteger('type')->default(0)->comment('0 = study guides, 1 = flashcards');
 
             $table->boolean('filetype')->nullable();
             $table->string('file');
