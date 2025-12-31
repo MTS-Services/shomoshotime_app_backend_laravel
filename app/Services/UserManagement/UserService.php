@@ -125,10 +125,6 @@ class UserService
     public function deleteUser(User $user): void
     {
         
-        // dd($user);
-        // $user->deleted_by = Auth::id();
-        // $user->save();
-
         $user->delete();
 
         if ($user->image) {
