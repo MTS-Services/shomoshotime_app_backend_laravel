@@ -85,32 +85,31 @@ class UserController extends Controller
         }
     }
 
-   public function store(UserRequest $request)
-{
-    $authUser = $request->user();
+    public function store(UserRequest $request)
+    {
+        $authUser = $request->user();
 
-    if (! $authUser) {
-        return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+        if (! $authUser) {
+            return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (! $authUser->isAdmin()) {
+            return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
+        }
+
+        $validated = $request->validated();
+
+        $image = $request->file('image');
+
+        $user = $this->userService->createUser($validated, $image);
+
+        return sendResponse(
+            true,
+            'User created successfully.',
+            new UserCollection($user),
+            Response::HTTP_CREATED
+        );
     }
-
-    if (! $authUser->isAdmin()) {
-        return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
-    }
-
-    $validated = $request->validated();
-
-    $image = $request->file('image'); // ✅ image collect
-
-    $user = $this->userService->createUser($validated, $image);
-
-    return sendResponse(
-        true,
-        'User created successfully.',
-        new UserCollection($user),
-        Response::HTTP_CREATED
-    );
-}
-
 
     public function update(UserRequest $request, $id)
     {
@@ -159,7 +158,7 @@ class UserController extends Controller
             return sendResponse(false, 'User not found', null, Response::HTTP_NOT_FOUND);
         }
 
-       $this->userService->deleteUser($user);
+        $this->userService->deleteUser($user);
 
         return sendResponse(
             true,
