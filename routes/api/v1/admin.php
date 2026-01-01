@@ -18,7 +18,7 @@ Route::controller(ContentController::class)->prefix('content')->group(function (
     Route::post('/list', 'getContents')->name('list-content');
     Route::post('/create', 'store')->name('create-content');
     Route::put('/update/{id}', 'update')->name('content.update');
-    Route::delete('/delete/{id}', 'delete')->name('content.delete');
+    Route::delete('/delete/{id}', 'destroy')->name('content.delete');
 });
 
 

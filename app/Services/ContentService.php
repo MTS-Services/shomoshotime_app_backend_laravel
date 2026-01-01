@@ -94,7 +94,7 @@ class ContentService
             if ($content->file) {
                 $this->fileDelete($content->file);
             }
-            $content->delete();
+            $content->forceDelete();
         });
     }
 }
