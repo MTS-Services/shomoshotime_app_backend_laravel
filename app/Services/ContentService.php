@@ -19,15 +19,9 @@ class ContentService
     {
         //
     }
-
-    //     public function getContents(string $orderBy = 'created_at', string $order = 'desc'): Builder
-    // {
-    //     return Content::orderBy($orderBy, $order)->latest();
-    // }
     public function getContents(?int $type = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         $query = Content::orderBy($orderBy, $order)->isPublish()->latest();
-
         if (! is_null($type)) {
             $query->where('type', $type);
         }
