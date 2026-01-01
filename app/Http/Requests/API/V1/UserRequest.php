@@ -16,8 +16,8 @@ class UserRequest extends BaseRequest
         $userId = $this->route('id');
 
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [ 'required', 'email', $userId ? 'unique:users,email,'.$userId : 'unique:users,email'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'email' => ['sometimes','required', 'email', $userId ? 'unique:users,email,'.$userId : 'unique:users,email'],
             'password' => [$userId ? 'nullable' : 'required','min:6',],
             'status' => ['nullable'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Traits\AuditColumnsTrait;
+use App\Models\Content;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -22,9 +23,9 @@ return new class extends Migration
             $table->string('subtitle')->nullable();
             $table->string('category');
 
-            $table->tinyInteger('type')->default(0)->comment('0 = study guides, 1 = flashcards');
+            $table->tinyInteger('type')->default(Content::TYPE_STUDY_GUIDE)->comment('0 = study guides, 1 = flashcards');
 
-            $table->boolean('filetype')->nullable();
+            $table->boolean('is_publish')->default(Content::NOT_PUBLISH)->comment('0 = not publish, 1 = publish');
             $table->string('file');
             
             $table->timestamps();

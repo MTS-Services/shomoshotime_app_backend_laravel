@@ -14,14 +14,14 @@ use Throwable;
 
 class ContentController extends Controller
 {
-     protected ContentService $service;
+    protected ContentService $service;
 
     public function __construct(ContentService $service)
     {
         $this->service = $service;
     }
 
-       public function getContents(Request $request)
+    public function getContents(Request $request)
     {
         try {
             $user = request()->user();
@@ -45,7 +45,7 @@ class ContentController extends Controller
         }
     }
 
-   public function store(ContentRequest $request)
+    public function store(ContentRequest $request)
     {
         try {
             $user = $request->user();
@@ -64,6 +64,56 @@ class ContentController extends Controller
             return sendResponse(true, 'Content created successfully.', new ContentCollection($content), Response::HTTP_CREATED);
         } catch (Throwable $e) {
             Log::error('Create Content Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function update(ContentRequest $request, $id)
+    {
+        try {
+            $user = $request->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $content = $this->service->findContent($id);
+            $data = $request->all();
+            $file = $request->file('file') ?? null;
+
+            // Update content via service
+            $updatedContent = $this->service->updateContent($content, $data, $file);
+
+            return sendResponse(true, 'Content updated successfully.', new ContentCollection($updatedContent), Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Update Content Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $user = request()->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $content = $this->service->findContent($id);
+            $this->service->deleteContent($content);
+
+            return sendResponse(true, 'Content deleted successfully.', null, Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Delete Content Error: '.$e->getMessage());
 
             return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }

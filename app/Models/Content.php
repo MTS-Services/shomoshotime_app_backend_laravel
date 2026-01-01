@@ -11,6 +11,8 @@ class Content extends BaseModel
     | Type Constants
     |--------------------------------------------------------------------------
     */
+    public const NOT_PUBLISH = 0;
+    public const IS_PUBLISH  = 1;
     public const TYPE_STUDY_GUIDE = 0;
     public const TYPE_FLASHCARD  = 1;
 
@@ -37,7 +39,7 @@ class Content extends BaseModel
     */
     protected $casts = [
         'type'     => 'integer',
-        'filetype' => 'boolean',
+        'is_publish' => 'boolean',
     ];
 
     /*
@@ -50,6 +52,13 @@ class Content extends BaseModel
         return [
             self::TYPE_STUDY_GUIDE => 'Study Guide',
             self::TYPE_FLASHCARD  => 'Flashcard',
+        ];
+    }
+    public static function getPublishList(): array
+    {
+        return [
+            self::NOT_PUBLISH => 'Not Publish',
+            self::IS_PUBLISH  => 'Publish',
         ];
     }
 
