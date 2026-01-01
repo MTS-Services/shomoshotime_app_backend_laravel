@@ -28,6 +28,7 @@ Route::prefix('content')->group(function () {
     // Flash Card routes
     Route::controller(FlashCardController::class)->prefix('flash-card')->group(function () {
         Route::post('/list', 'getFlashCards')->name('flash-card.list');
+        Route::post('/create', 'create')->name('flash-card.create');
     });
 
 });
