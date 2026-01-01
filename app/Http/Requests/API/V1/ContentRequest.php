@@ -26,7 +26,9 @@ class ContentRequest extends BaseRequest
             'subtitle' => 'nullable|string|max:255',
             'category' => 'required|string|max:255',
             'type' => 'required|integer|in:0,1',
-            'file' => 'required|file|mimes:pdf,mp3,wav,ogg|max:10240',
+             'file'     => $this->isMethod('post')
+                ? 'required|file|mimes:pdf,mp3,wav,ogg|max:10240'
+                : 'sometimes|file|mimes:pdf,mp3,wav,ogg|max:10240',
         ];
     }
 
