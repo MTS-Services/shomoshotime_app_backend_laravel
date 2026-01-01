@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\API\V1;
+namespace App\Http\Controllers\API\V1\ContentManagement;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V1\ContentRequest;
 use App\Http\Resources\API\V1\ContentCollection;
-use App\Models\Content;
-use App\Services\ContentService;
+use App\Services\ContentManagement\ContentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
