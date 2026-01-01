@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\BaseModel;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Content extends BaseModel
 {
@@ -77,16 +78,18 @@ class Content extends BaseModel
         };
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-
-    /*
-    |--------------------------------------------------------------------------
-    | Scopes (Optional but Useful)
-    |--------------------------------------------------------------------------
-    */
+   
+    /* ===================== ===================== ===================== =====================
+                                    Start of Relation's
+    ===================== ===================== ===================== ===================== */
+    public function flashCard(): HasMany
+    {
+        return $this->hasMany(FlashCard::class, 'content_id', 'id');
+    }
+   
+    /* ===================== ===================== ===================== =====================
+                                    End of Relation's
+    ===================== ===================== ===================== ===================== */
     public function scopeStudyGuide($query)
     {
         return $query->where('type', self::TYPE_STUDY_GUIDE);
