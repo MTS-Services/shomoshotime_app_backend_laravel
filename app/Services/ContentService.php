@@ -56,6 +56,7 @@ class ContentService
                     $data['title'] ?? 'content'
                 );
             }
+            $data['type'] = $data['type'] ?? Content::TYPE_STUDY_GUIDE;
             $data['is_publish'] = $data['is_publish'] ?? Content::NOT_PUBLISH;
             $data['created_by'] = Auth::id();
 
