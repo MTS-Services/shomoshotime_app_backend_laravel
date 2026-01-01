@@ -91,4 +91,32 @@ class FlashCardService
             ];
         }
     }
+
+    public function deleteFlashCard(int $id): bool|array
+    {
+        try {
+            $flashCard = FlashCard::findOrFail($id);
+
+            if (! $flashCard) {
+                return [
+                    'success' => false,
+                    'message' => 'Flash card not found.',
+                    'status' => Response::HTTP_NOT_FOUND,
+                ];
+            }
+
+            return DB::transaction(function () use ($flashCard) {
+                $flashCard->forceDelete();
+
+                return true;
+            });
+
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Something went wrong: '.$e->getMessage(),
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            ];
+        }
+    }
 }
