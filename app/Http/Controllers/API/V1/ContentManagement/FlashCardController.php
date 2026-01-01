@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1\ContentManagement;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\V1\FlashCardRequest;
 use App\Http\Resources\API\V1\FlashCardCollection;
 use App\Services\ContentManagement\FlashCardService;
 use Illuminate\Http\Request;
@@ -59,7 +60,7 @@ class FlashCardController extends Controller
         }
     }
 
-    public function create(Request $request)
+    public function create(FlashCardRequest $request)
     {
         try {
             $user = $request->user();
