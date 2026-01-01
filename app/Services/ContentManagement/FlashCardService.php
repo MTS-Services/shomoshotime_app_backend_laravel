@@ -2,8 +2,13 @@
 
 namespace App\Services\ContentManagement;
 
+use App\Models\Content;
 use App\Models\FlashCard;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class FlashCardService
 {
@@ -15,10 +20,46 @@ class FlashCardService
         //
     }
 
-       public function getFlashCardsByContent(?int $contentId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+    public function getFlashCardsByContent(?int $contentId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         return FlashCard::with('content')->where('content_id', $contentId)->orderBy($orderBy, $order);
     }
 
-   
+    public function createFlashCard(array $data): FlashCard|array
+    {
+        try {
+            // Fetch content
+            $content = Content::findOrFail($data['content_id']);
+
+            if (! $content) {
+                return [
+                    'success' => false,
+                    'message' => 'Content not found.',
+                    'status' => Response::HTTP_NOT_FOUND,
+                ];
+            }
+
+            if ($content->type === Content::TYPE_STUDY_GUIDE) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot create flash card: Content is a Study Guide.',
+                    'status' => Response::HTTP_FORBIDDEN,
+                ];
+            }
+
+
+            $data['created_by'] = Auth::id();
+
+            return DB::transaction(function () use ($data) {
+                return FlashCard::create($data);
+            });
+
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Something went wrong: '.$e->getMessage(),
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            ];
+        }
+    }
 }
