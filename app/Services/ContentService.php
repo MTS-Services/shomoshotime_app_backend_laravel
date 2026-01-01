@@ -26,7 +26,7 @@ class ContentService
     // }
     public function getContents(?int $type = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
-        $query = Content::orderBy($orderBy, $order);
+        $query = Content::orderBy($orderBy, $order)->isPublish()->latest();
 
         if (! is_null($type)) {
             $query->where('type', $type);
@@ -56,6 +56,7 @@ class ContentService
                     $data['title'] ?? 'content'
                 );
             }
+            $data['is_publish'] = $data['is_publish'] ?? Content::NOT_PUBLISH;
             $data['created_by'] = Auth::id();
 
             return Content::create($data);
