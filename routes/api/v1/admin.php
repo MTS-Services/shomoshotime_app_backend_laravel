@@ -16,11 +16,9 @@ Route::controller(UserController::class)->prefix('user')->group(function () {
 });
 Route::controller(ContentController::class)->prefix('content')->group(function () {
     Route::post('/list', 'getContents')->name('list-content');
-    Route::post('/single/{id}', 'getUser')->name('single-user');
-    Route::post('/status-change', 'statusChange')->name('status-change');
-    Route::post('/create', 'store')->name('create-user');
-    Route::put('/update/{id}', 'update')->name('user.update');
-    Route::delete('/delete/{id}', 'delete')->name('user.delete');
+    Route::post('/create', 'store')->name('create-content');
+    Route::put('/update/{id}', 'update')->name('content.update');
+    Route::delete('/delete/{id}', 'delete')->name('content.delete');
 });
 
 
