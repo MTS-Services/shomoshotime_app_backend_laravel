@@ -95,4 +95,13 @@ class Content extends BaseModel
     {
         return $query->where('type', self::TYPE_FLASHCARD);
     }
+    public function scopeIsPublish($query)
+    {
+        return $query->where('is_publish', self::IS_PUBLISH);
+    }
+
+    public function scopeNOTPublish($query)
+    {
+        return $query->where('is_publish', self::NOT_PUBLISH);
+    }
 }

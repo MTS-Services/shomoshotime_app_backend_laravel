@@ -20,6 +20,7 @@ class ContentSeeder extends Seeder
                 'category' => 'science',
                 'type' => Content::TYPE_STUDY_GUIDE,
                 'file' => 'contents/biology-guide.pdf',
+                'is_publish' => Content::IS_PUBLISH
             ],
             [
                 'sort_order' => 2,
@@ -28,6 +29,7 @@ class ContentSeeder extends Seeder
                 'category' => 'mathematics',
                 'type' => Content::TYPE_FLASHCARD,
                 'file' => 'contents/math-flashcards.mp3',
+                'is_publish' => Content::IS_PUBLISH
             ],
             [
                 'sort_order' => 3,
@@ -36,6 +38,7 @@ class ContentSeeder extends Seeder
                 'category' => 'history',
                 'type' => Content::TYPE_STUDY_GUIDE,
                 'file' => 'contents/history-guide.pdf',
+                'is_publish' => Content::NOT_PUBLISH
             ],
             [
                 'sort_order' => 4,
@@ -44,6 +47,7 @@ class ContentSeeder extends Seeder
                 'category' => 'chemistry',
                 'type' => Content::TYPE_FLASHCARD,
                 'file' => 'contents/chemistry-flashcards.mp3',
+                'is_publish' => Content::NOT_PUBLISH
             ],
             [
                 'sort_order' => 5,
@@ -52,6 +56,7 @@ class ContentSeeder extends Seeder
                 'category' => 'language',
                 'type' => Content::TYPE_STUDY_GUIDE,
                 'file' => 'contents/english-guide.pdf',
+                'is_publish' => Content::IS_PUBLISH
             ],
             [
                 'sort_order' => 6,
@@ -60,6 +65,7 @@ class ContentSeeder extends Seeder
                 'category' => 'geography',
                 'type' => Content::TYPE_FLASHCARD,
                 'file' => 'contents/geography-flashcards.mp3',
+                'is_publish' => Content::IS_PUBLISH
             ],
         ]);
     }
