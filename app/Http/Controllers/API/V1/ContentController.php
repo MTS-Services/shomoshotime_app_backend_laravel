@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\V1\ContentRequest;
 use App\Http\Resources\API\V1\ContentCollection;
 use App\Models\Content;
 use App\Services\ContentService;
@@ -41,6 +42,30 @@ class ContentController extends Controller
             Log::error('Get Todos Error: '.$e->getMessage());
 
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+   public function store(ContentRequest $request)
+    {
+        try {
+            $user = $request->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $data = $request->all();
+            $file = $request->file('file') ?? null;
+            $content = $this->service->createContent($data, $file);
+
+            return sendResponse(true, 'Content created successfully.', new ContentCollection($content), Response::HTTP_CREATED);
+        } catch (Throwable $e) {
+            Log::error('Create Content Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

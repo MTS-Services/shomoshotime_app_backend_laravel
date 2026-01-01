@@ -25,7 +25,6 @@ class Content extends BaseModel
         'subtitle',
         'category',
         'type',
-        'filetype',
         'file',
         'created_by',
         'updated_by',
