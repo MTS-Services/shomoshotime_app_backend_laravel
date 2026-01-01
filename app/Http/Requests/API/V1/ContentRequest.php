@@ -26,6 +26,7 @@ class ContentRequest extends BaseRequest
             'subtitle' => 'nullable|string|max:255',
             'category' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|integer|in:0,1',
+            'is_publish' => 'sometimes|required|boolean',
              'file'     => $this->isMethod('post')
                 ? 'required|file|mimes:pdf,mp3,wav,ogg|max:10240'
                 : 'sometimes|file|mimes:pdf,mp3,wav,ogg|max:10240',

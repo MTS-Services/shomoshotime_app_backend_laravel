@@ -25,6 +25,7 @@ class Content extends BaseModel
         'sort_order',
         'title',
         'subtitle',
+        'is_publish',
         'category',
         'type',
         'file',
