@@ -85,29 +85,32 @@ class UserController extends Controller
         }
     }
 
-    public function store(UserRequest $request)
-    {
-        $authUser = $request->user();
+   public function store(UserRequest $request)
+{
+    $authUser = $request->user();
 
-        if (! $authUser) {
-            return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
-        }
-
-        if (! $authUser->isAdmin()) {
-            return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
-        }
-
-        $validated = $request->validated();
-
-        $user = $this->userService->createUser($validated);
-
-        return sendResponse(
-            true,
-            'User created successfully.',
-            new UserCollection($user),
-            Response::HTTP_CREATED
-        );
+    if (! $authUser) {
+        return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
     }
+
+    if (! $authUser->isAdmin()) {
+        return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
+    }
+
+    $validated = $request->validated();
+
+    $image = $request->file('image'); // ✅ image collect
+
+    $user = $this->userService->createUser($validated, $image);
+
+    return sendResponse(
+        true,
+        'User created successfully.',
+        new UserCollection($user),
+        Response::HTTP_CREATED
+    );
+}
+
 
     public function update(UserRequest $request, $id)
     {
