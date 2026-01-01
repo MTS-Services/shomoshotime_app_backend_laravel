@@ -50,6 +50,34 @@ class UserController extends Controller
         }
     }
 
+    public function getUser(Request $request, $id)
+    {
+        try {
+            $authUser = $request->user();
+
+            if (! $authUser) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $authUser->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $user = $this->userService->getUser($id); // Make sure your service has this method
+
+            if (! $user) {
+                return sendResponse(false, 'User not found', null, Response::HTTP_NOT_FOUND);
+            }
+
+            return sendResponse(true, 'User fetched successfully.', new UserCollection($user), Response::HTTP_OK);
+
+        } catch (Throwable $e) {
+            Log::error('Get User Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function statusChange(Request $request)
     {
         try {
