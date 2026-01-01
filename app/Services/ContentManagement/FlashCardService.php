@@ -47,11 +47,40 @@ class FlashCardService
                 ];
             }
 
-
             $data['created_by'] = Auth::id();
 
             return DB::transaction(function () use ($data) {
                 return FlashCard::create($data);
+            });
+
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Something went wrong: '.$e->getMessage(),
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            ];
+        }
+    }
+
+    public function updateFlashCard(int $id, array $data): FlashCard|array
+    {
+        try {
+            $flashCard = FlashCard::findOrFail($id);
+
+            if (! $flashCard) {
+                return [
+                    'success' => false,
+                    'message' => 'Flash card not found.',
+                    'status' => Response::HTTP_NOT_FOUND,
+                ];
+            }
+
+            $data['updated_by'] = Auth::id();
+
+            return DB::transaction(function () use ($flashCard, $data) {
+                $flashCard->update($data);
+
+                return $flashCard;
             });
 
         } catch (Throwable $e) {

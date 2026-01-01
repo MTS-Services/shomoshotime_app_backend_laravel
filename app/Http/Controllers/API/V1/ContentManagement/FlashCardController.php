@@ -86,4 +86,32 @@ class FlashCardController extends Controller
             return sendResponse(false, 'Something went wrong.', null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function update(FlashCardRequest $request, $id)
+    {
+        try {
+            $user = $request->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
+            }
+
+            $data = $request->all();
+            $result = $this->service->updateFlashCard($id, $data);
+
+            if (is_array($result)) {
+                return sendResponse(false, $result['message'], null, $result['status']);
+            }
+
+            return sendResponse(true, 'Flash card updated successfully.', $result, Response::HTTP_OK);
+
+        } catch (Throwable $e) {
+            Log::error('Update FlashCard Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong.', null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
