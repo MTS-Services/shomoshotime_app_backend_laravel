@@ -30,7 +30,7 @@ Route::prefix('content')->group(function () {
         Route::post('/list', 'getFlashCards')->name('flash-card.list');
         Route::post('/create', 'create')->name('flash-card.create');
         Route::put('/update/{id}', 'update')->name('flash-card.update');
-        Route::delete('/delete/{id}', 'destroy')->name('flash-card.delete');
+        Route::delete('/delete/{id}', 'delete')->name('flash-card.delete');
     });
 
 });
