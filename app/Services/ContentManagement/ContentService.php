@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\ContentManagement;
 
 use App\Http\Traits\FileManagementTrait;
 use App\Models\Content;

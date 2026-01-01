@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\API\V1\ContentController;
+use App\Http\Controllers\API\V1\ContentManagement\ContentController;
 use App\Http\Controllers\API\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
