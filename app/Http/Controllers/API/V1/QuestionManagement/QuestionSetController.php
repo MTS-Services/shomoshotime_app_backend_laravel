@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1\QuestionManagement;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\V1\QuestionSetRequest;
 use App\Http\Resources\API\V1\QuestionSetResource;
 use App\Services\QuestionManagement\QuestionSetService;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ class QuestionSetController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(QuestionSetRequest $request)
     {
         try {
             $user = $request->user();
@@ -70,7 +71,7 @@ class QuestionSetController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(QuestionSetRequest $request, $id)
     {
         try {
             $user = $request->user();
