@@ -45,4 +45,11 @@ class QuestionService
             return $findData;
         });
     }
+
+    public function deleteQuestion($findData)
+    {
+        return DB::transaction(function () use ($findData) {
+            $findData->forceDelete();
+        });
+    }
 }
