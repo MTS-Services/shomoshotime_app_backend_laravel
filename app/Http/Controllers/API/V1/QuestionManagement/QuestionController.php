@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1\QuestionManagement;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\V1\QuestionRequest;
 use App\Http\Resources\API\V1\QuestionResource;
 use App\Services\QuestionManagement\QuestionService;
 use Illuminate\Http\Request;
@@ -46,7 +47,7 @@ class QuestionController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(QuestionRequest $request)
     {
         try {
             $user = $request->user();
@@ -69,7 +70,7 @@ class QuestionController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(QuestionRequest $request, $id)
     {
         try {
             $user = $request->user();
