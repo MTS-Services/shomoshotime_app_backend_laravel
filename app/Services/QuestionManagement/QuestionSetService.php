@@ -42,15 +42,22 @@ class QuestionSetService
         });
     }
 
-  public function updateQuestion($findData, array $data)
-{
-    return DB::transaction(function () use ($findData, $data) {
-        $data['updated_by'] = Auth::id();
+    public function updateQuestion($findData, array $data)
+    {
+        return DB::transaction(function () use ($findData, $data) {
+            $data['updated_by'] = Auth::id();
 
-        $findData->update($data);
+            $findData->update($data);
 
-        return $findData; 
-    });
-}
+            return $findData;
+        });
+    }
 
+    public function deleteQuestion($findData)
+    {
+        return DB::transaction(function () use ($findData) {
+            $findData->forceDelete();
+        });
+
+    }
 }
