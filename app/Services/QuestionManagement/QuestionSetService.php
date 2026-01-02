@@ -41,4 +41,16 @@ class QuestionSetService
             return QuestionSet::create($data);
         });
     }
+
+  public function updateQuestion($findData, array $data)
+{
+    return DB::transaction(function () use ($findData, $data) {
+        $data['updated_by'] = Auth::id();
+
+        $findData->update($data);
+
+        return $findData; 
+    });
+}
+
 }
