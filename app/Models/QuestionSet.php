@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class QuestionSet extends BaseModel
 {
     protected $fillable = [
@@ -53,7 +55,10 @@ class QuestionSet extends BaseModel
     /* ===================== ===================== ===================== =====================
                                     Start of Relation's
     ===================== ===================== ===================== ===================== */
-    /** Status constants */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class, 'question_set_id', 'id');
+    }
 
     /* ===================== ===================== ===================== =====================
                                     End of Relation's
