@@ -71,7 +71,7 @@ class QuestionController extends Controller
         }
     }
 
-    public function update(QuestionRequest $request, $id)
+    public function update(Request $request, $id)
     {
         try {
             $user = $request->user();
