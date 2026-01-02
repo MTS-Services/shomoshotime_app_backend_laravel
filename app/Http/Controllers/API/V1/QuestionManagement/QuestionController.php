@@ -59,7 +59,8 @@ class QuestionController extends Controller
                 return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
             }
             $data = $request->all();
-            $question = $this->service->createQuestion($data);
+            $file = $request->file('file') ?? null;
+            $question = $this->service->createQuestion($data, $file);
             $question->load('questionSet');
 
             return sendResponse(true, 'Question created successfully.', new QuestionResource($question), Response::HTTP_CREATED);
@@ -81,9 +82,10 @@ class QuestionController extends Controller
             if (! $user->isAdmin()) {
                 return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
             }
-            $data = $request->all();
             $findData = $this->service->findData($id);
-            $question = $this->service->updateQuestion($findData, $data);
+            $data = $request->all();
+            $file = $request->file('file') ?? null;
+            $question = $this->service->updateQuestion($findData, $data , $file);
             $question->load('questionSet');
 
             return sendResponse(true, 'Question updated successfully.', new QuestionResource($question), Response::HTTP_OK);
