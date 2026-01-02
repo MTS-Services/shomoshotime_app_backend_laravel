@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\V1\ContentManagement\ContentController;
 use App\Http\Controllers\API\V1\ContentManagement\FlashCardController;
+use App\Http\Controllers\API\V1\QuestionManagement\QuestionSetController;
 use App\Http\Controllers\API\V1\UserController;
 use App\Models\FlashCard;
 use Illuminate\Support\Facades\Route;
@@ -34,5 +35,14 @@ Route::prefix('content')->group(function () {
     });
 
 });
+Route::prefix('question')->group(function () {
+    Route::controller(QuestionSetController::class)->prefix('set')->group(function () {
+        Route::post('/list', 'getQuestionSets')->name('question-set.list');
+        Route::post('/create', 'store')->name('question-set.create');
+        Route::put('/update/{id}', 'update')->name('question-set.update');
+        Route::delete('/delete/{id}', 'destroy')->name('question-set.delete');
+    });
+});
+
 
 
