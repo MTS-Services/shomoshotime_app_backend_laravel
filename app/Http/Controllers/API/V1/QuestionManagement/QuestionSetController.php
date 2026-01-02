@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers\API\V1\QuestionManagement;
 
-use Throwable;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\API\V1\QuestionSetResource;
+use App\Services\QuestionManagement\QuestionSetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use App\Http\Resources\API\V1\QuestionSetCollection;
 use Symfony\Component\HttpFoundation\Response;
-use App\Services\QuestionManagement\QuestionSetService;
+use Throwable;
 
 class QuestionSetController extends Controller
 {
-      protected QuestionSetService $service;
+    protected QuestionSetService $service;
 
     public function __construct(QuestionSetService $service)
     {
         $this->service = $service;
     }
-     public function getQuestionSets(Request $request)
+
+    public function getQuestionSets(Request $request)
     {
         try {
             $user = request()->user();
@@ -37,9 +38,8 @@ class QuestionSetController extends Controller
                     ->whereLike('title', $searchQuery);
             }
             $questionSets = $query->paginate($request->input('per_page', 10));
-            $questionSets->setPageName('page');
 
-            return sendResponse(true, ' Question sets fetched successfully.', new QuestionSetCollection($questionSets),Response::HTTP_OK);
+            return sendResponse(true, ' Question sets fetched successfully.', QuestionSetResource::collection($questionSets), Response::HTTP_OK);
         } catch (Throwable $e) {
             Log::error('Get Todos Error: '.$e->getMessage());
 
@@ -47,4 +47,26 @@ class QuestionSetController extends Controller
         }
     }
 
+    public function store(Request $request)
+    {
+        try {
+            $user = $request->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $data = $request->all();
+            $question_set = $this->service->createQuestion($data);
+
+            return sendResponse(true, 'Question Set created successfully.', new QuestionSetResource($question_set), Response::HTTP_CREATED);
+        } catch (Throwable $e) {
+            Log::error('Create Question Set Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
