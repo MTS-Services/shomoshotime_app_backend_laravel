@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\V1\ContentManagement\ContentController;
 use App\Http\Controllers\API\V1\ContentManagement\FlashCardController;
+use App\Http\Controllers\API\V1\QuestionManagement\QuestionController;
 use App\Http\Controllers\API\V1\QuestionManagement\QuestionSetController;
 use App\Http\Controllers\API\V1\UserController;
 use App\Models\FlashCard;
@@ -36,6 +37,12 @@ Route::prefix('content')->group(function () {
 
 });
 Route::prefix('question')->group(function () {
+    Route::controller(QuestionController::class)->group(function () {
+        Route::post('/list', 'getQuestions')->name('question.list');
+        Route::post('/create', 'store')->name('question.create');
+        Route::put('/update/{id}', 'update')->name('question.update');
+        Route::delete('/delete/{id}', 'delete')->name('question.delete');
+    });
     Route::controller(QuestionSetController::class)->prefix('set')->group(function () {
         Route::post('/list', 'getQuestionSets')->name('question-set.list');
         Route::post('/create', 'store')->name('question-set.create');

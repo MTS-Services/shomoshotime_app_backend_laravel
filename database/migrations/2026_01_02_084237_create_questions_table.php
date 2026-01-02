@@ -31,6 +31,7 @@ return new class extends Migration
             $table->foreign('question_set_id')->references('id')->on('question_sets')->cascadeOnDelete()->cascadeOnUpdate();
             
             $table->timestamps();
+            $table->softDeletes();
             $this->addAuditColumns($table);
         });
     }
