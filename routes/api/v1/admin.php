@@ -40,7 +40,7 @@ Route::prefix('question')->group(function () {
         Route::post('/list', 'getQuestionSets')->name('question-set.list');
         Route::post('/create', 'store')->name('question-set.create');
         Route::put('/update/{id}', 'update')->name('question-set.update');
-        Route::delete('/delete/{id}', 'destroy')->name('question-set.delete');
+        Route::delete('/delete/{id}', 'delete')->name('question-set.delete');
     });
 });
 
