@@ -58,6 +58,7 @@ class QuestionService
                     'questions',
                     $data['title'] ?? 'question'
                 );
+                
             }
             $data['updated_by'] = Auth::id();
 
