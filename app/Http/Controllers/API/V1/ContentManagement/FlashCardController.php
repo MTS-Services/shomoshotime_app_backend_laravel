@@ -74,6 +74,7 @@ class FlashCardController extends Controller
             }
             $data = $request->all();
             $result = $this->service->createFlashCard($data);
+            $result->load('content');
 
             if (is_array($result)) {
                 return sendResponse(false, $result['message'], null, $result['status']);
