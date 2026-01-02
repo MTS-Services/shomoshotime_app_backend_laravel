@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V1\UserRequest;
-use App\Http\Resources\API\V1\UserCollection;
+use App\Http\Resources\API\V1\UserResource;
 use App\Models\User;
 use App\Services\UserManagement\UserService;
 use Illuminate\Http\Request;
@@ -40,9 +40,8 @@ class UserController extends Controller
                     ->whereLike('email', $searchQuery);
             }
             $users = $query->paginate($request->input('per_page', 10));
-            $users->setPageName('page');
 
-            return sendResponse(true, 'Users data fetched successfully.', new UserCollection($users), Response::HTTP_OK);
+            return sendResponse(true, 'Users data fetched successfully.',  UserResource::collection($users), Response::HTTP_OK);
         } catch (Throwable $e) {
             Log::error('Get Todos Error: '.$e->getMessage());
 
@@ -69,7 +68,7 @@ class UserController extends Controller
                 return sendResponse(false, 'User not found', null, Response::HTTP_NOT_FOUND);
             }
 
-            return sendResponse(true, 'User fetched successfully.', new UserCollection($user), Response::HTTP_OK);
+            return sendResponse(true, 'User fetched successfully.', new UserResource($user), Response::HTTP_OK);
 
         } catch (Throwable $e) {
             Log::error('Get User Error: '.$e->getMessage());
@@ -134,7 +133,7 @@ class UserController extends Controller
         return sendResponse(
             true,
             'User created successfully.',
-            new UserCollection($user),
+            new UserResource($user),
             Response::HTTP_CREATED
         );
     }
@@ -164,7 +163,7 @@ class UserController extends Controller
         return sendResponse(
             true,
             'User updated successfully.',
-            new UserCollection($updatedUser),
+            new UserResource($updatedUser),
             Response::HTTP_OK
         );
     }

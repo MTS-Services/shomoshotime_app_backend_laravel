@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API\V1\ContentManagement;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V1\FlashCardRequest;
-use App\Http\Resources\API\V1\FlashCardCollection;
+use App\Http\Resources\API\V1\FlashCardResource;
 use App\Services\ContentManagement\FlashCardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -40,11 +40,12 @@ class FlashCardController extends Controller
             }
 
             $flashCards = $this->service->getFlashCardsByContent($contentId)->get();
+            $contents = $flashCards->paginate($request->input('per_page', 10));
 
             return sendResponse(
                 true,
                 'Flash cards fetched successfully.',
-                new FlashCardCollection($flashCards),
+                FlashCardResource::collection($flashCards),
                 Response::HTTP_OK
             );
 
@@ -78,7 +79,7 @@ class FlashCardController extends Controller
                 return sendResponse(false, $result['message'], null, $result['status']);
             }
 
-            return sendResponse(true, 'Flash card created successfully.', $result, Response::HTTP_CREATED);
+            return sendResponse(true, 'Flash card created successfully.', new FlashCardResource($result), Response::HTTP_CREATED);
 
         } catch (Throwable $e) {
             Log::error('Create FlashCard Error: '.$e->getMessage());
@@ -106,7 +107,7 @@ class FlashCardController extends Controller
                 return sendResponse(false, $result['message'], null, $result['status']);
             }
 
-            return sendResponse(true, 'Flash card updated successfully.', $result, Response::HTTP_OK);
+            return sendResponse(true, 'Flash card updated successfully.', new FlashCardResource($result), Response::HTTP_OK);
 
         } catch (Throwable $e) {
             Log::error('Update FlashCard Error: '.$e->getMessage());

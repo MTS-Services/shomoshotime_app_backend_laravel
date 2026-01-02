@@ -4,7 +4,8 @@ namespace App\Http\Controllers\API\V1\ContentManagement;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V1\ContentRequest;
-use App\Http\Resources\API\V1\ContentCollection;
+
+use App\Http\Resources\API\V1\ContentResource;
 use App\Services\ContentManagement\ContentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -34,9 +35,8 @@ class ContentController extends Controller
             $type = $request->input('type');
             $query = $this->service->getContents($type);
             $contents = $query->paginate($request->input('per_page', 10));
-            $contents->setPageName('page');
 
-            return sendResponse(true, 'Users data fetched successfully.', new ContentCollection($contents), Response::HTTP_OK);
+            return sendResponse(true, 'Users data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
         } catch (Throwable $e) {
             Log::error('Get Todos Error: '.$e->getMessage());
 
@@ -60,7 +60,7 @@ class ContentController extends Controller
             $file = $request->file('file') ?? null;
             $content = $this->service->createContent($data, $file);
 
-            return sendResponse(true, 'Content created successfully.', new ContentCollection($content), Response::HTTP_CREATED);
+            return sendResponse(true, 'Content created successfully.', new ContentResource($content), Response::HTTP_CREATED);
         } catch (Throwable $e) {
             Log::error('Create Content Error: '.$e->getMessage());
 
@@ -87,7 +87,7 @@ class ContentController extends Controller
             // Update content via service
             $updatedContent = $this->service->updateContent($content, $data, $file);
 
-            return sendResponse(true, 'Content updated successfully.', new ContentCollection($updatedContent), Response::HTTP_OK);
+            return sendResponse(true, 'Content updated successfully.', new ContentResource($updatedContent), Response::HTTP_OK);
         } catch (Throwable $e) {
             Log::error('Update Content Error: '.$e->getMessage());
 
