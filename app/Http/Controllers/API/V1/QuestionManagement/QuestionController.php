@@ -68,4 +68,28 @@ class QuestionController extends Controller
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+            $data = $request->all();
+            $findData = $this->service->findData($id);
+            $question = $this->service->updateQuestion($findData, $data);
+            $question->load('questionSet');
+
+            return sendResponse(true, 'Question updated successfully.', new QuestionResource($question), Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Update Question Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
