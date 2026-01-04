@@ -33,4 +33,22 @@ class SubscriptionService
             return Subscription::create($data);
         });
     }
+
+    public function updateSubscription(Subscription $subscription, array $data): Subscription
+    {
+        return DB::transaction(function () use ($subscription, $data) {
+
+            $data['updated_by'] = Auth::id();
+            $subscription->update($data);
+
+            return $subscription;
+        });
+    }
+
+    public function deleteSubscription(Subscription $subscription): void
+    {
+        DB::transaction(function () use ($subscription) {
+            $subscription->forceDelete();
+        });
+    }
 }

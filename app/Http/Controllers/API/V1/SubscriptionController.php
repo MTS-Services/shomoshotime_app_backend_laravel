@@ -64,4 +64,53 @@ class SubscriptionController extends Controller
             return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+      public function update(SubscriptionRequest $request, $id)
+    {
+        try {
+            $user = $request->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $subscription = $this->service->findData($id);
+            $data = $request->all();
+
+            // Update subscription via service
+            $updatedsubscription = $this->service->updateSubscription($subscription, $data);
+
+            return sendResponse(true, 'Subscription updated successfully.', new SubscriptionResource($updatedsubscription), Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Update Subscription Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+        public function delete($id)
+    {
+        try {
+            $user = request()->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! $user->isAdmin()) {
+                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $subscription = $this->service->findData($id);
+            $this->service->deleteSubscription($subscription);
+
+            return sendResponse(true, 'Subscription deleted successfully.', null, Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Delete Subscription Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
