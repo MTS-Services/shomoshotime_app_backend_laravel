@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\V1\SubscriptionRequest;
 use App\Http\Resources\API\V1\SubscriptionResource;
 use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
@@ -41,7 +42,7 @@ class SubscriptionController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(SubscriptionRequest $request)
     {
         try {
             $user = $request->user();
