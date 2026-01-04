@@ -4,11 +4,9 @@ use App\Http\Controllers\API\V1\ContentManagement\ContentController;
 use App\Http\Controllers\API\V1\ContentManagement\FlashCardController;
 use App\Http\Controllers\API\V1\QuestionManagement\QuestionController;
 use App\Http\Controllers\API\V1\QuestionManagement\QuestionSetController;
+use App\Http\Controllers\API\V1\SubscriptionController;
 use App\Http\Controllers\API\V1\UserController;
-use App\Models\FlashCard;
 use Illuminate\Support\Facades\Route;
-
-
 
 Route::controller(UserController::class)->prefix('user')->group(function () {
     Route::post('/all', 'getUsers')->name('all-users');
@@ -51,5 +49,9 @@ Route::prefix('question')->group(function () {
     });
 });
 
-
-
+Route::controller(SubscriptionController::class)->prefix('subscription')->group(function () {
+    Route::post('/list', 'getSubscriptions')->name('subscription.list');
+    Route::post('/create', 'store')->name('subscription.create');
+    Route::put('/update/{id}', 'update')->name('subscription.update');
+    Route::delete('/delete/{id}', 'delete')->name('subscription.delete');
+});
