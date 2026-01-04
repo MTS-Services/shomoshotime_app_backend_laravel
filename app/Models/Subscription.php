@@ -63,4 +63,10 @@ class Subscription extends BaseModel
             default => 'badge-default',
         };
     }
+
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE);
+    }
 }
