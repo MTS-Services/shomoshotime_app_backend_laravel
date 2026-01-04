@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
             ContentSeeder::class,
             FlashCardSeeder::class,
             QuestionSetSeeder::class,
-            QuestionSeeder::class
+            QuestionSeeder::class,
+            SubscriptionSeeder::class
         ]);
     }
 }

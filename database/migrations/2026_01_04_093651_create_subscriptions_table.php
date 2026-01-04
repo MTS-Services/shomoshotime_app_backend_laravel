@@ -18,12 +18,12 @@ return new class extends Migration
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('sort_order')->default(0);
+
             $table->string('duration');
             $table->integer('price');
             $table->json('features');
-            $table->tinyInteger('tag')->nullable();
+            $table->string('tag')->nullable();
             $table->tinyInteger('status')->default(Subscription::STATUS_INACTIVE)->comment('0=inactive, 1=active');
-
             
             $table->timestamps();
             $table->softDeletes();
