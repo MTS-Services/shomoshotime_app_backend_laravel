@@ -39,17 +39,9 @@ class ContentService
         return $content;
     }
 
-    public function createContent(array $data, $file = null): Content
+    public function createContent(array $data): Content
     {
-        return DB::transaction(function () use ($data, $file) {
-
-            if ($file) {
-                $data['file'] = $this->handleFileUpload(
-                    $file,
-                    'contents',
-                    $data['title'] ?? 'content'
-                );
-            }
+        return DB::transaction(function () use ($data) {    
             $data['type'] = $data['type'] ?? Content::TYPE_STUDY_GUIDE;
             $data['is_publish'] = $data['is_publish'] ?? Content::NOT_PUBLISH;
             $data['created_by'] = Auth::id();
@@ -58,23 +50,9 @@ class ContentService
         });
     }
 
-    public function updateContent(Content $content, array $data, $file = null): Content
+    public function updateContent(Content $content, array $data): Content
     {
-        return DB::transaction(function () use ($content, $data, $file) {
-
-            if ($file) {
-                if ($content->file) {
-                    $this->fileDelete($content->file);
-                }
-
-                // Upload new file
-                $data['file'] = $this->handleFileUpload(
-                    $file,
-                    'contents',
-                    $data['title'] ?? 'content'
-                );
-            }
-
+        return DB::transaction(function () use ($content, $data) {
             $data['updated_by'] = Auth::id();
             $content->update($data);
 
@@ -84,10 +62,7 @@ class ContentService
 
     public function deleteContent(Content $content): void
     {
-        DB::transaction(function () use ($content) {
-            if ($content->file) {
-                $this->fileDelete($content->file);
-            }
+        DB::transaction(function () use ($content) {         
             $content->forceDelete();
         });
     }
