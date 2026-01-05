@@ -19,11 +19,27 @@ class ContentService
     {
         //
     }
-    public function getContents(?int $type = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+
+    public function getContents(?int $type = null, ?string $category = null, ?string $file_type = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         $query = Content::orderBy($orderBy, $order)->isPublish()->latest();
         if (! is_null($type)) {
             $query->where('type', $type);
+        }
+
+        if (! is_null($category)) {
+            $query->where('category', $category);
+        }
+
+        if (! is_null($file_type)) {
+            $query->whereHas('chapters', function ($q) use ($file_type) {
+                $q->where('file_type', $file_type);
+            });
+
+            $query->with(['chapters' => function ($q) use ($file_type) {
+                $q->where('file_type', $file_type)
+                    ->select('id', 'content_id', 'file', 'file_type');
+            }]);
         }
 
         return $query;
@@ -41,7 +57,7 @@ class ContentService
 
     public function createContent(array $data): Content
     {
-        return DB::transaction(function () use ($data) {    
+        return DB::transaction(function () use ($data) {
             $data['type'] = $data['type'] ?? Content::TYPE_STUDY_GUIDE;
             $data['is_publish'] = $data['is_publish'] ?? Content::NOT_PUBLISH;
             $data['created_by'] = Auth::id();
@@ -62,7 +78,7 @@ class ContentService
 
     public function deleteContent(Content $content): void
     {
-        DB::transaction(function () use ($content) {         
+        DB::transaction(function () use ($content) {
             $content->forceDelete();
         });
     }
