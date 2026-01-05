@@ -14,7 +14,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('capters', function (Blueprint $table) {
+        Schema::create('Chapters', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('sort_order')->default(0);
 
@@ -33,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('capters');
+        Schema::dropIfExists('Chapters');
     }
 };

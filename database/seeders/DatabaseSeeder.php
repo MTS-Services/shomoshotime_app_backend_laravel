@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             QuestionSetSeeder::class,
             QuestionSeeder::class,
             SubscriptionSeeder::class,
-            CapterSeeder::class
+            ChapterSeeder::class
         ]);
     }
 }

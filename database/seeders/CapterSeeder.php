@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\Capter;
+use App\Models\Chapter;
 use Illuminate\Database\Seeder;
 
-class CapterSeeder extends Seeder
+class ChapterSeeder extends Seeder
 {
     public function run(): void
     {
-        Capter::insert([
+        Chapter::insert([
             [
                 'content_id' => 1,
                 'file'       => 'chapter-1-audio.mp3',
