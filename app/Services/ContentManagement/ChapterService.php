@@ -1,84 +1,128 @@
 <?php
 
-namespace App\Services\ChapterManagement;
+namespace App\Services\ContentManagement;
 
 use App\Http\Traits\FileManagementTrait;
 use App\Models\Chapter;
+use App\Models\Content;
 use Illuminate\Database\Eloquent\Builder;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class ChapterService
 {
     use FileManagementTrait;
-   public function getChapters(?int $type = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+   public function getChaptersByContent(?int $contentId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
-        $query = Chapter::orderBy($orderBy, $order)->isPublish()->latest();
-        if (! is_null($type)) {
-            $query->where('type', $type);
-        }
 
-        return $query;
+        return Chapter::with('content')->where('content_id', $contentId)->orderBy($orderBy, $order);
     }
 
-    public function findChapter($id): ?Chapter
+    public function createChapter(array $data, $file = null): Chapter|array
     {
-        $chapter = Chapter::findOrFail($id);
-        if (! $chapter) {
-            throw new \Exception('Chapter not found');
-        }
+        try {
+            // Fetch content
+            $content = Content::findOrFail($data['content_id']);
 
-        return $chapter;
-    }
+            if (! $content) {
+                return [
+                    'success' => false,
+                    'message' => 'Content not found.',
+                    'status' => Response::HTTP_NOT_FOUND,
+                ];
+            }
 
-    public function createChapter(array $data, $file = null): Chapter
-    {
-        return DB::transaction(function () use ($data, $file) {
+            if ($content->type === Content::TYPE_STUDY_GUIDE) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot create flash card: Content is a Study Guide.',
+                    'status' => Response::HTTP_FORBIDDEN,
+                ];
+            }
+
+            $data['created_by'] = Auth::id();
+
+             return DB::transaction(function () use ($data, $file) {
 
             if ($file) {
                 $data['file'] = $this->handleFileUpload(
                     $file,
-                    'Chapters',
-                    $data['title'] ?? 'Chapter'
+                    'chapters',
+                    $data['file_type'] ?? 'chapter'
                 );
             }
+
             $data['created_by'] = Auth::id();
 
             return Chapter::create($data);
         });
+
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Something went wrong: '.$e->getMessage(),
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            ];
+        }
     }
 
-    public function updateChapter(Chapter $chapter, array $data, $file = null): Chapter
+    public function updateChapter(int $id, array $data): Chapter|array
     {
-        return DB::transaction(function () use ($chapter, $data, $file) {
+        try {
+            $Chapter = Chapter::findOrFail($id);
 
-            if ($file) {
-                if ($chapter->file) {
-                    $this->fileDelete($chapter->file);
-                }
-
-                // Upload new file
-                $data['file'] = $this->handleFileUpload(
-                    $file,
-                    'Chapters',
-                    $data['title'] ?? 'Chapter'
-                );
+            if (! $Chapter) {
+                return [
+                    'success' => false,
+                    'message' => 'Flash card not found.',
+                    'status' => Response::HTTP_NOT_FOUND,
+                ];
             }
 
             $data['updated_by'] = Auth::id();
-            $chapter->update($data);
 
-            return $chapter;
-        });
+            return DB::transaction(function () use ($Chapter, $data) {
+                $Chapter->update($data);
+
+                return $Chapter;
+            });
+
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Something went wrong: '.$e->getMessage(),
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            ];
+        }
     }
 
-    public function deleteChapter(Chapter $chapter): void
+    public function deleteChapter(int $id): bool|array
     {
-        DB::transaction(function () use ($chapter) {
-            if ($chapter->file) {
-                $this->fileDelete($chapter->file);
+        try {
+            $Chapter = Chapter::findOrFail($id);
+
+            if (! $Chapter) {
+                return [
+                    'success' => false,
+                    'message' => 'Flash card not found.',
+                    'status' => Response::HTTP_NOT_FOUND,
+                ];
             }
-            $chapter->forceDelete();
-        });
+
+            return DB::transaction(function () use ($Chapter) {
+                $Chapter->forceDelete();
+
+                return true;
+            });
+
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Something went wrong: '.$e->getMessage(),
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            ];
+        }
     }
 }
