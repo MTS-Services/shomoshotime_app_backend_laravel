@@ -8,20 +8,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    use SoftDeletes, AuditColumnsTrait;
+    use AuditColumnsTrait, SoftDeletes;
+
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('Chapters', function (Blueprint $table) {
+        Schema::create('chapters', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('sort_order')->default(0);
 
             $table->unsignedBigInteger('content_id');
             $table->string('file');
             $table->string('file_type');
-            
+
             $table->timestamps();
             $table->softDeletes();
             $this->addAuditColumns($table);
