@@ -87,6 +87,11 @@ class Content extends BaseModel
         return $this->hasMany(FlashCard::class, 'content_id', 'id');
     }
    
+    public function capter(): HasMany
+    {
+        return $this->hasMany(Capter::class, 'content_id', 'id');
+    }
+   
     /* ===================== ===================== ===================== =====================
                                     End of Relation's
     ===================== ===================== ===================== ===================== */
