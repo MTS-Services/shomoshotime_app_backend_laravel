@@ -82,12 +82,12 @@ class Content extends BaseModel
     /* ===================== ===================== ===================== =====================
                                     Start of Relation's
     ===================== ===================== ===================== ===================== */
-    public function flashCard(): HasMany
+    public function flashCards(): HasMany
     {
         return $this->hasMany(FlashCard::class, 'content_id', 'id');
     }
    
-    public function Chapter(): HasMany
+    public function chapters(): HasMany
     {
         return $this->hasMany(Chapter::class, 'content_id', 'id');
     }

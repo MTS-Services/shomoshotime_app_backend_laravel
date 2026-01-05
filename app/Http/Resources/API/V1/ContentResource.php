@@ -23,9 +23,12 @@ class ContentResource extends JsonResource
             'category' => $this->category,
             'type' => $this->type,
             'type_label' => Content::getTypeList()[$this->type] ?? 'N/A',
-            'filetype' => $this->filetype,
-            'file' => $this->file,
+            'chapters' => ChapterResource::collection(
+            $this->whenLoaded('chapters')
+             ),
+            'flashCards' => FlashCardResource::collection($this->whenLoaded('flashCards') ),
 
+             
             'created_at' => $this->created_at_formatted ?? $this->created_at,
             'updated_at' => $this->updated_at_formatted ?? $this->updated_at,
             'creater_name' => $this->creater?->name ?? 'N/A',

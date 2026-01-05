@@ -20,6 +20,20 @@ class FlashCardService
         //
     }
 
+    public function getFlashCards(?int $type = null, ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+    {
+        $query = Content::orderBy($orderBy, $order)->isPublish()->latest();
+        if (! is_null($type)) {
+            $query->where('type', $type);
+        }
+        
+        if (! is_null($category)) {
+            $query->where('category', $category);
+        }
+
+        return $query;
+    }
+
     public function getFlashCardsByContent(?int $contentId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         return FlashCard::with('content')->where('content_id', $contentId)->orderBy($orderBy, $order);
