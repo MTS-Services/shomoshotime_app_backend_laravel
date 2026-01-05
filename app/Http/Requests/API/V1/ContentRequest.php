@@ -26,20 +26,37 @@ class ContentRequest extends BaseRequest
             'subtitle' => 'nullable|string|max:255',
             'category' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|integer|in:0,1',
-            'is_publish' => 'sometimes|required|boolean',
-             'file'     => $this->isMethod('post')
-                ? 'required|file|mimes:pdf,mp3,wav,ogg|max:10240'
-                : 'sometimes|file|mimes:pdf,mp3,wav,ogg|max:10240',
+            'is_publish' => 'sometimes|required|boolean',          
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'file.required' => 'Please upload a file.',
-            'file.file' => 'The uploaded item must be a valid file.',
-            'file.mimes' => 'Only PDF and audio files (mp3, wav, ogg) are allowed.',
-            'file.max' => 'The file size must not exceed 10MB.',
-        ];
-    }
+ public function messages(): array
+{
+    return [
+        // Title
+        'title.required' => 'The title field is required.',
+        'title.string'   => 'The title must be a valid string.',
+        'title.max'      => 'The title may not be greater than 255 characters.',
+
+        // Subtitle
+        'subtitle.string' => 'The subtitle must be a valid string.',
+        'subtitle.max'    => 'The subtitle may not be greater than 255 characters.',
+
+        // Category
+        'category.required' => 'The category field is required.',
+        'category.string'   => 'The category must be a valid string.',
+        'category.max'      => 'The category may not be greater than 255 characters.',
+
+        // Type
+        'type.required' => 'The type field is required.',
+        'type.integer'  => 'The type must be an integer value.',
+        'type.in'       => 'The selected type is invalid.',
+
+        // Publish Status
+        'is_publish.required' => 'The publish status field is required.',
+        'is_publish.boolean'  => 'The publish status must be true or false.',
+
+    ];
+}
+
 }
