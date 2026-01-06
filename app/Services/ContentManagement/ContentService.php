@@ -20,13 +20,19 @@ class ContentService
         //
     }
 
-    public function getContents(?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+    public function getContents($type = 0,?string $file_type = null, ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
-        $query = Content::orderBy($orderBy, $order)->isPublish()->where('type', 0)->latest();
+        $query = Content::orderBy($orderBy, $order)->isPublish()->latest();
+        if (! is_null($type)) {
+            $query->where('type', $type);
+        }
+        
         if (! is_null($category)) {
             $query->where('category', $category);
         }
-
+        if (! is_null($file_type)) {
+            $query->where('file_type', $file_type);
+        }
         return $query;
     }
 

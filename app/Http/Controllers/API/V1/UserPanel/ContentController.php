@@ -14,7 +14,8 @@ use Throwable;
 class ContentController extends Controller
 {
     protected ContentService $service;
-      protected FlashCardService $flashCardService;
+
+    protected FlashCardService $flashCardService;
 
     public function __construct(ContentService $service, FlashCardService $flashCardService)
     {
@@ -22,7 +23,6 @@ class ContentController extends Controller
         $this->flashCardService = $flashCardService;
     }
 
-    
     public function studyGuides(Request $request)
     {
         try {
@@ -32,7 +32,17 @@ class ContentController extends Controller
             }
             $file_type = $request->input('file_type');
             $category = $request->input('category');
-            $query = $this->service->getContents( $category, $file_type);
+            $query = $this->service->getContents($category, $file_type);
+            if ($request->has('search')) {
+                $searchQuery = $request->input('search');
+                $query->whereLike('title', $searchQuery)
+                    ->orWhereLike('subtitle', $searchQuery); // note OR instead of chaining WHERE
+
+                $contents = $query->paginate($request->input('per_page', 10));
+
+                return sendResponse(true, 'Search data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
+            }
+
             $contents = $query->paginate($request->input('per_page', 10));
 
             return sendResponse(true, 'Study guides data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
@@ -42,6 +52,7 @@ class ContentController extends Controller
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
     public function flashCards(Request $request)
     {
         try {
@@ -49,8 +60,8 @@ class ContentController extends Controller
             if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
-            
-            $category = $request->input('category');            
+
+            $category = $request->input('category');
             $query = $this->flashCardService->getFlashCards($category);
             $flashCards = $query->paginate($request->input('per_page', 10));
 
