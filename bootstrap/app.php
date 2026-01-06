@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
         then: function () {
-            Route::middleware(['auth:api', 'email-verified', 'admin'])
+            Route::middleware(['auth:api', 'email-verified', 'admin', 'admin-cors'])
                 ->prefix('api/v1/admin')
                 ->name('api.v1.admin.')
                 ->group(base_path('routes/api/v1/admin.php'));
@@ -40,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'email-verified' => App\Http\Middleware\EmailVerified::class,
             'admin' => App\Http\Middleware\AdminMidelware::class,
             'user' => App\Http\Middleware\UserMidelware::class,
+            'admin-cors' => App\Http\Middleware\AdminCorsMiddleware::class,
 
         ]);
         $middleware->web(MultiLangSet::class);
