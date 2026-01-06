@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\API\V1\ContentManagement\ChapterController;
 use App\Http\Controllers\API\V1\ContentManagement\ContentController;
 use App\Http\Controllers\API\V1\ContentManagement\FlashCardController;
 use App\Http\Controllers\API\V1\QuestionManagement\QuestionController;
@@ -26,13 +25,7 @@ Route::prefix('content')->group(function () {
         Route::delete('/delete/{id}', 'destroy')->name('content.delete');
     });
 
-    // Chapter routes
-    Route::controller(ChapterController::class)->prefix('chapter')->group(function () {
-        Route::post('/list', 'getChapters')->name('chapter.list');
-        Route::post('/create', 'create')->name('chapter.create');
-        Route::put('/update/{id}', 'update')->name('chapter.update');
-        Route::delete('/delete/{id}', 'delete')->name('chapter.delete');
-    });
+  
     // Flash Card routes
     Route::controller(FlashCardController::class)->prefix('flash-card')->group(function () {
         Route::post('/list', 'getFlashCards')->name('flash-card.list');
