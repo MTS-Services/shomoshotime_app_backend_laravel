@@ -25,7 +25,6 @@ class ContentResource extends JsonResource
             'file_type' => $this->file_type,
             'type' => $this->type,
             'type_label' => Content::getTypeList()[$this->type] ?? 'N/A',
-            'flashCards' => FlashCardResource::collection($this->whenLoaded('flashCards') ),
 
              
             'created_at' => $this->created_at_formatted ?? $this->created_at,
