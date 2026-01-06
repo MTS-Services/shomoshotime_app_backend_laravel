@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1\UserPanel;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\ContentResource;
+use App\Http\Resources\API\V1\FlashCardResource;
 use App\Services\ContentManagement\ContentService;
 use App\Services\ContentManagement\FlashCardService;
 use Illuminate\Http\Request;
@@ -63,9 +64,42 @@ class ContentController extends Controller
 
             $category = $request->input('category');
             $query = $this->flashCardService->getFlashCards($category);
+             if ($request->has('search')) {
+                $searchQuery = $request->input('search');
+                $query->whereLike('title', $searchQuery)
+                    ->orWhereLike('subtitle', $searchQuery); // note OR instead of chaining WHERE
+
+                $contents = $query->paginate($request->input('per_page', 10));
+
+                return sendResponse(true, 'Search data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
+            }
             $flashCards = $query->paginate($request->input('per_page', 10));
 
             return sendResponse(true, ' Flash cards data fetched successfully.', ContentResource::collection($flashCards), Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Get Todos Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    public function flashCardSets(Request $request)
+    {
+        try {
+            $user = request()->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+            $contentId = $request->input('content_id');
+            if (! $contentId) {
+                return sendResponse(false, 'content_id is required', null, Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $flashCardSets = $this->flashCardService->getFlashCardsByContent($contentId);
+            $contents = $flashCardSets->paginate($request->input('per_page', 10));
+            
+            return sendResponse(true, ' Flash card sets data fetched successfully.', FlashCardResource::collection($contents), Response::HTTP_OK);
         } catch (Throwable $e) {
             Log::error('Get Todos Error: '.$e->getMessage());
 
