@@ -30,6 +30,7 @@ class Content extends BaseModel
         'category',
         'type',
         'file',
+        'file_type',
         'created_by',
         'updated_by',
     ];

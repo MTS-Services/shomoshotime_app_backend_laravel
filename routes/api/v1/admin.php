@@ -22,7 +22,7 @@ Route::prefix('content')->group(function () {
     Route::controller(ContentController::class)->group(function () {
         Route::post('/list', 'getContents')->name('content.list');
         Route::post('/create', 'store')->name('content.create');
-        Route::put('/update/{id}', 'update')->name('content.update');
+        Route::post('/update/{id}', 'update')->name('content.update');
         Route::delete('/delete/{id}', 'destroy')->name('content.delete');
     });
 

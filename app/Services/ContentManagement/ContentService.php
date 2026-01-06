@@ -20,7 +20,7 @@ class ContentService
         //
     }
 
-    public function getContents(?int $type = null, ?string $category = null, ?string $file_type = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+    public function getContents(?int $type = null, ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         $query = Content::orderBy($orderBy, $order)->isPublish()->latest();
         if (! is_null($type)) {
@@ -29,17 +29,6 @@ class ContentService
 
         if (! is_null($category)) {
             $query->where('category', $category);
-        }
-
-        if (! is_null($file_type)) {
-            $query->whereHas('chapters', function ($q) use ($file_type) {
-                $q->where('file_type', $file_type);
-            });
-
-            $query->with(['chapters' => function ($q) use ($file_type) {
-                $q->where('file_type', $file_type)
-                    ->select('id', 'content_id', 'file', 'file_type');
-            }]);
         }
 
         return $query;
@@ -55,20 +44,66 @@ class ContentService
         return $content;
     }
 
-    public function createContent(array $data): Content
+    public function createContent(array $data, $file): Content
     {
-        return DB::transaction(function () use ($data) {
-            $data['type'] = $data['type'] ?? Content::TYPE_STUDY_GUIDE;
-            $data['is_publish'] = $data['is_publish'] ?? Content::NOT_PUBLISH;
+        return DB::transaction(function () use ($data, $file) {
+            
+            if ($file) {
+                $mimeType = $file->getMimeType();
+                $data['file_type'] = $this->detectFileType($mimeType);
+                if ($data['file_type'] === 'invalid') {
+                    return [
+                        'data' => null,
+                        'message' => 'Only audio and PDF files are allowed.',
+                    ];
+                }
+
+                $data['file'] = $this->handleFileUpload(
+                    $file,
+                    'contents',
+                    $data['file_type']
+                );
+            }
             $data['created_by'] = Auth::id();
 
             return Content::create($data);
         });
     }
 
-    public function updateContent(Content $content, array $data): Content
+    private function detectFileType(string $mimeType): string
     {
-        return DB::transaction(function () use ($content, $data) {
+        return match (true) {
+            str_starts_with($mimeType, 'audio/') => 'audio',
+            $mimeType === 'application/pdf' => 'pdf',
+            default => 'invalid',
+        };
+    }
+
+    public function updateContent(Content $content, array $data, $file): Content
+    {
+        return DB::transaction(function () use ($content, $data, $file) {
+
+             if ($file) {
+                    $mimeType = $file->getMimeType();
+                    $data['file_type'] = $this->detectFileType($mimeType);
+
+                    if ($data['file_type'] === 'invalid') {
+                        return [
+                            'data' => null,
+                            'message' => 'Only audio and PDF files are allowed.',
+                        ];
+                    }
+                    if (! empty($content->file)) {
+                        $this->fileDelete($content->file);
+                    }
+
+                    $data['file'] = $this->handleFileUpload(
+                        $file,
+                        'contents',
+                        $data['file_type']
+                    );
+                }
+
             $data['updated_by'] = Auth::id();
             $content->update($data);
 
