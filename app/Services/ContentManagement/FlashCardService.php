@@ -22,9 +22,7 @@ class FlashCardService
 
     public function getFlashCards( ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
-        $query = Content::orderBy($orderBy, $order)->isPublish()->with('flashCards')->latest();
-        
-            $query->where('type', 1);
+        $query = Content::orderBy($orderBy, $order)->isPublish()->where('type', 1)->with('flashCards')->latest();
         
         if (! is_null($category)) {
             $query->where('category', $category);
