@@ -34,18 +34,17 @@ class FlashCardController extends Controller
 
             // content_id must be provided
             $contentId = $request->input('content_id');
-
             if (! $contentId) {
                 return sendResponse(false, 'content_id is required', null, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $flashCards = $this->service->getFlashCardsByContent($contentId)->get();
+            $flashCards = $this->service->getFlashCardsByContent($contentId);
             $contents = $flashCards->paginate($request->input('per_page', 10));
-
+           
             return sendResponse(
                 true,
                 'Flash cards fetched successfully.',
-                FlashCardResource::collection($flashCards),
+                FlashCardResource::collection($contents),
                 Response::HTTP_OK
             );
 

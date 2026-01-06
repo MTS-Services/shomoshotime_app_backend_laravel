@@ -36,6 +36,7 @@ class FlashCardService
     public function getFlashCardsByContent(?int $contentId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         return FlashCard::with('content')->where('content_id', $contentId)->orderBy($orderBy, $order);
+      
     }
 
     public function createFlashCard(array $data): FlashCard|array
