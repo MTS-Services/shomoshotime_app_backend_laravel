@@ -21,12 +21,15 @@ class ContentRequest extends BaseRequest
      */
     public function rules(): array
     {
+    
+
         return [
             'title' => 'sometimes|required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'category' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|integer|in:0,1',
-            'is_publish' => 'sometimes|required|boolean',          
+            'is_publish' => 'sometimes|required|boolean',   
+            'file' =>'sometimes|required|file|mimes:mp3,pdf|max:10240',      
         ];
     }
 

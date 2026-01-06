@@ -18,8 +18,8 @@ class DatabaseSeeder extends Seeder
             FlashCardSeeder::class,
             QuestionSetSeeder::class,
             QuestionSeeder::class,
-            SubscriptionSeeder::class,
-            ChapterSeeder::class
+            SubscriptionSeeder::class
+            // ChapterSeeder::class
         ]);
     }
 }

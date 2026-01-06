@@ -50,9 +50,9 @@ class ContentController extends Controller
             if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
-            $type = $request->input('type');
+            
             $category = $request->input('category');            
-            $query = $this->flashCardService->getFlashCards($type, $category);
+            $query = $this->flashCardService->getFlashCards($category);
             $flashCards = $query->paginate($request->input('per_page', 10));
 
             return sendResponse(true, ' Flash cards data fetched successfully.', ContentResource::collection($flashCards), Response::HTTP_OK);

@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('title');
             $table->string('subtitle')->nullable();
             $table->string('category');
+            $table->string('file')->nullable();
+            $table->string('file_type')->nullable();
 
             $table->tinyInteger('type')->default(Content::TYPE_STUDY_GUIDE)->comment('0 = study guides, 1 = flashcards');
             $table->boolean('is_publish')->default(Content::NOT_PUBLISH)->comment('0 = not publish, 1 = publish');

@@ -57,7 +57,8 @@ class ContentController extends Controller
             }
 
             $data = $request->all();
-            $content = $this->service->createContent($data);
+            $file = $request->file('file') ?? null;
+            $content = $this->service->createContent($data, $file);
 
             return sendResponse(true, 'Content created successfully.', new ContentResource($content), Response::HTTP_CREATED);
         } catch (Throwable $e) {
@@ -81,9 +82,10 @@ class ContentController extends Controller
 
             $content = $this->service->findContent($id);
             $data = $request->all();
+            $file = $request->file('file') ?? null;
 
             // Update content via service
-            $updatedContent = $this->service->updateContent($content, $data);
+            $updatedContent = $this->service->updateContent($content, $data, $file);
 
             return sendResponse(true, 'Content updated successfully.', new ContentResource($updatedContent), Response::HTTP_OK);
         } catch (Throwable $e) {
