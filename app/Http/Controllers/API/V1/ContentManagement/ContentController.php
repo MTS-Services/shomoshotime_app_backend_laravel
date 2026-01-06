@@ -36,7 +36,7 @@ class ContentController extends Controller
             $query = $this->service->getContents($type);
             $contents = $query->paginate($request->input('per_page', 10));
 
-            return sendResponse(true, 'Users data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
+            return sendResponse(true, 'Contents data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
         } catch (Throwable $e) {
             Log::error('Get Todos Error: '.$e->getMessage());
 

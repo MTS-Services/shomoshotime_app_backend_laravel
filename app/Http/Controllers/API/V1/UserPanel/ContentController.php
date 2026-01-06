@@ -30,10 +30,9 @@ class ContentController extends Controller
             if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
-            $type = $request->input('type');
             $file_type = $request->input('file_type');
             $category = $request->input('category');
-            $query = $this->service->getContents($type, $category, $file_type);
+            $query = $this->service->getContents( $category, $file_type);
             $contents = $query->paginate($request->input('per_page', 10));
 
             return sendResponse(true, 'Study guides data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
