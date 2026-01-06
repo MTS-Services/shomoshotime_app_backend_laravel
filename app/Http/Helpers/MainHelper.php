@@ -6,16 +6,16 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PropertyType;
 use Carbon\Carbon;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-
 
 function getLang()
 {
     return request()->header('Accept-Language', 'en');
 }
-
 
 // function sendResponse($status, $message, $data = null, $statusCode = 200, $additional = null)
 // {
@@ -30,33 +30,63 @@ function getLang()
 //     return response()->json($responseData, $statusCode);
 // }
 
+// function sendResponse($status, $message, $data = null, $statusCode = 200, $additional = null)
+// {
+//     // Initialize the base response data
+//     $responseData = [
+//         'success' => $status,
+//         'message' => $message,
+//     ];
+
+//     // Check if the data is a Laravel ResourceCollection
+//     if ($data instanceof ResourceCollection) {
+//         // Get the paginated data and metadata from the resource collection
+//         $paginatedData = $data->response()->getData(true);
+
+//         // Merge the paginated data into your response structure
+//         $responseData = array_merge($responseData, [
+//             'data' => $paginatedData['data'],
+//             'links' => $paginatedData['links'],
+//             'meta' => $paginatedData['meta'],
+//         ]);
+//     } else {
+//         // If it's not a collection, just add the data directly
+//         $responseData['data'] = $data;
+//     }
+
+//     // Merge any additional data if provided
+//     if (!empty($additional) && is_array($additional)) {
+//         $responseData = array_merge($responseData, $additional);
+//     }
+
+//     return response()->json($responseData, $statusCode);
+// }
 
 function sendResponse($status, $message, $data = null, $statusCode = 200, $additional = null)
 {
-    // Initialize the base response data
     $responseData = [
         'success' => $status,
         'message' => $message,
     ];
 
-    // Check if the data is a Laravel ResourceCollection
-    if ($data instanceof ResourceCollection) {
-        // Get the paginated data and metadata from the resource collection
-        $paginatedData = $data->response()->getData(true);
+    if ($data instanceof ResourceCollection || $data instanceof JsonResource) {
+        // If data is a paginated resource
+        if ($data->resource instanceof AbstractPaginator) {
+            $paginatedData = $data->response()->getData(true);
 
-        // Merge the paginated data into your response structure
-        $responseData = array_merge($responseData, [
-            'data' => $paginatedData['data'],
-            'links' => $paginatedData['links'],
-            'meta' => $paginatedData['meta'],
-        ]);
+            $responseData = array_merge($responseData, [
+                'data' => $paginatedData['data'],
+                'links' => $paginatedData['links'],
+                'meta' => $paginatedData['meta'],
+            ]);
+        } else {
+            $responseData['data'] = $data->toArray(request());
+        }
     } else {
-        // If it's not a collection, just add the data directly
         $responseData['data'] = $data;
     }
 
-    // Merge any additional data if provided
-    if (!empty($additional) && is_array($additional)) {
+    if (! empty($additional) && is_array($additional)) {
         $responseData = array_merge($responseData, $additional);
     }
 
@@ -107,6 +137,7 @@ function slug($slug)
 {
     $slug = Str::replace(' ', '-', $slug);
     $slug = Str::lower($slug);
+
     return $slug;
 }
 function storage_url($urlOrArray)
@@ -118,8 +149,7 @@ function storage_url($urlOrArray)
         $itemCount = count($urlOrArray);
         foreach ($urlOrArray as $index => $url) {
 
-            $result .= $url ? (Str::startsWith($url, 'https://') ? $url : asset('storage/' . $url)) : $image;
-
+            $result .= $url ? (Str::startsWith($url, 'https://') ? $url : asset('storage/'.$url)) : $image;
 
             if ($count === $itemCount - 1) {
                 $result .= '';
@@ -128,9 +158,10 @@ function storage_url($urlOrArray)
             }
             $count++;
         }
+
         return $result;
     } else {
-        return $urlOrArray ? (Str::startsWith($urlOrArray, 'https://') ? $urlOrArray : asset('storage/' . $urlOrArray)) : $image;
+        return $urlOrArray ? (Str::startsWith($urlOrArray, 'https://') ? $urlOrArray : asset('storage/'.$urlOrArray)) : $image;
     }
 }
 
@@ -142,12 +173,14 @@ function auth_storage_url($url, $gender = false)
     } elseif ($gender == 2) {
         $image = asset('default_img/female.jpg');
     }
-    return $url ? asset('storage/' . $url) : $image;
+
+    return $url ? asset('storage/'.$url) : $image;
 }
 
 function getSubmitterType($className)
 {
     $className = basename(str_replace('\\', '/', $className));
+
     return trim(preg_replace('/(?<!\ )[A-Z]/', ' $0', $className));
 }
 function generateOrderID()
@@ -160,7 +193,7 @@ function generateOrderID()
     $date = date('ymd');
     $time = date('is');
 
-    return $prefix . $date . $time . mt_rand(10000, 99999);
+    return $prefix.$date.$time.mt_rand(10000, 99999);
 }
 
 // function generateTransactionID($length = 10)
@@ -173,7 +206,6 @@ function generateOrderID()
 //     return $transactionID;
 // }
 
-
 function availableTimezones()
 {
     $timezones = [];
@@ -181,7 +213,7 @@ function availableTimezones()
 
     foreach ($timezoneIdentifiers as $timezoneIdentifier) {
         $timezone = new DateTimeZone($timezoneIdentifier);
-        $offset = $timezone->getOffset(new DateTime());
+        $offset = $timezone->getOffset(new DateTime);
         $offsetPrefix = $offset < 0 ? '-' : '+';
         $offsetFormatted = gmdate('H:i', abs($offset));
 
@@ -197,6 +229,7 @@ function isImage($path)
 {
     $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff', 'ico'];
     $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
     return in_array($extension, $imageExtensions);
 }
 
@@ -204,10 +237,11 @@ function isVideo($path)
 {
     $videoExtensions = ['mp4', 'mov', 'avi', 'wmv', 'flv', 'webm', 'mkv', '3gp', 'ogv', 'ts', 'mpg', 'mpeg', 'vob'];
     $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
     return in_array($extension, $videoExtensions);
 }
 
-if (!function_exists('titleGenerator')) {
+if (! function_exists('titleGenerator')) {
     function titleGenerator($typeID, $categoryID, $areaID)
     {
         $type = PropertyType::find($typeID);
@@ -219,29 +253,31 @@ if (!function_exists('titleGenerator')) {
         $areaName = $area ? $area->name : 'غير محدد';
 
         // Concatenate the names with Arabic text
-        return trim($typeName . ' في ' . $categoryName . ' في ' . $areaName);
+        return trim($typeName.' في '.$categoryName.' في '.$areaName);
     }
 }
 
-if (!function_exists('generateOrderID')) {
+if (! function_exists('generateOrderID')) {
     function generateOrderID()
     {
         $prefix = 'ORDER-';
         $date = date('ymds');
         $randomNumber = mt_rand(10, 99);
-        $orderID = $prefix . $date . $randomNumber;
+        $orderID = $prefix.$date.$randomNumber;
+
         return Order::where('order_id', $orderID)->exists() ? generateOrderID() : $orderID;
     }
 
 }
 
-if (!function_exists('generateTransactionID')) {
+if (! function_exists('generateTransactionID')) {
     function generateTransactionID()
     {
         $characters = 'TRNX-';
         $date = date('ymds');
         $randomNumber = mt_rand(10, 99);
-        $transactionID = $characters . $date . $randomNumber;
+        $transactionID = $characters.$date.$randomNumber;
+
         return Payment::where('transaction_id', $transactionID)->exists() ? generateTransactionID() : $transactionID;
     }
 }
