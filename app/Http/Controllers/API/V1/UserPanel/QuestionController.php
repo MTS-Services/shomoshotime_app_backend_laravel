@@ -98,7 +98,7 @@ class QuestionController extends Controller
             $validator = Validator::make($request->all(), [
                 'question_set_id' => 'required|integer|exists:question_sets,id',
                 'question_id' => 'required|integer|exists:questions,id',
-                'answer' => 'required|string|max:1|in:a,b,c,d,A,B,C,D',
+                'answer' => 'required|string|in:option_a,option_b,option_c,option_d',
             ]);
 
             if ($validator->fails()) {
