@@ -38,4 +38,33 @@ class QuestionController extends Controller
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+
+    public function submitAnswer(Request $request)
+    {
+        try {
+            $user = request()->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+            $qus_set_id = $request->input('question_set_id');
+            if (! $qus_set_id) {
+                return sendResponse(false, 'content_id is required', null, Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $qus_id = $request->input('question_id');
+            if (! $qus_set_id) {
+                return sendResponse(false, 'content_id is required', null, Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $answer = $request->input('answer');
+            if (! $answer) {
+                return sendResponse(false, 'answer is required', null, Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $result = $this->questionSetService->submitAnswer($qus_set_id,$qus_id, $answer);
+            return sendResponse(true, 'Answer submitted successfully.', $result, Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Get Todos Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

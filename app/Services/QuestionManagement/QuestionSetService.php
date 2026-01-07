@@ -9,12 +9,22 @@ use Illuminate\Support\Facades\DB;
 
 class QuestionSetService
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function submitAnswer(int $questionSetId, int $questionId, string $answer)
     {
-        //
+        return DB::transaction(function () use ($questionSetId, $questionId, $answer) {
+
+            return QuestionSet::updateOrCreate(
+                [
+                    'question_set_id' => $questionSetId,
+                    'qus_id' => $questionId,
+                    'user_id' => Auth::id(),
+                ],
+                [
+                    'answer' => $answer,
+                    'created_by' => Auth::id(),
+                ]
+            );
+        });
     }
 
     public function getQuestionSets(string $orderBy = 'created_at', string $order = 'desc'): Builder
