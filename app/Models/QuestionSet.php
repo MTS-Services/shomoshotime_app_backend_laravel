@@ -59,8 +59,50 @@ class QuestionSet extends BaseModel
     {
         return $this->hasMany(Question::class, 'question_set_id', 'id');
     }
+      public function analytics(): HasMany
+    {
+        return $this->hasMany(QuestionSetAnalytic::class);
+    }
+
+    public function mockTestAttempts(): HasMany
+    {
+        return $this->hasMany(MockTestAttempt::class);
+    }
 
     /* ===================== ===================== ===================== =====================
                                     End of Relation's
     ===================== ===================== ===================== ===================== */
+
+  
+    // Helper Methods
+    public function getTotalQuestions(): int
+    {
+        return $this->questions()->count();
+    }
+
+    public function getDifficultyLabel(): string
+    {
+        return match($this->status) {
+            self::STATUS_EASY => 'Easy',
+            self::STATUS_MEDIUM => 'Medium',
+            self::STATUS_HARD => 'Hard',
+            default => 'Unknown',
+        };
+    }
+
+    // Scope for filtering by difficulty
+    public function scopeEasy($query)
+    {
+        return $query->where('status', self::STATUS_EASY);
+    }
+
+    public function scopeMedium($query)
+    {
+        return $query->where('status', self::STATUS_MEDIUM);
+    }
+
+    public function scopeHard($query)
+    {
+        return $query->where('status', self::STATUS_HARD);
+    }
 }
