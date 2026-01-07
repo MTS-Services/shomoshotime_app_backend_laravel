@@ -40,7 +40,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreign('question_set_id')->references('id')->on('question_sets')->cascadeOnDelete()->cascadeOnUpdate();
 
-            
+            $table->timestamps();
             $table->softDeletes();
             $this->addAuditColumns($table);
         });
