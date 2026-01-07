@@ -10,6 +10,31 @@ Route::controller(ContentController::class)->prefix('content')->group(function (
     Route::post('/flash-cards', 'flashCards')->name('flash-cards');
     Route::post('/flash-cards/sets', 'flashCardSets')->name('flash-cards.sets');
 });
+// Route::controller(QuestionController::class)->prefix('question')->group(function () {
+//     Route::post('/sets', 'getQuestionSets')->name('question-sets');
+// });
+
 Route::controller(QuestionController::class)->prefix('question')->group(function () {
+    
+    // Question Sets
     Route::post('/sets', 'getQuestionSets')->name('question-sets');
+    
+    // Questions
+    Route::post('/sets/questions', 'getQuestions')->name('get-questions');
+    
+    // Answer Submission
+    Route::post('/submit-answer', 'submitAnswer')->name('submit-answer');
+    
+    // Mock Test
+    Route::post('/start-mock-test', 'startMockTest')->name('start-mock-test');
+    Route::post('/mock-tests/result', 'getMockTestResult')->name('mock-test-result');
+    Route::post('/mock-tests/all-results', 'getAllMockTestResults')->name('all-mock-test-results');
+    
+    // Progress & Statistics
+    Route::post('/sets/progress', 'getProgress')->name('get-progress');
+    Route::post('/sets/questions/statistics', 'getQuestionStatistics')->name('question-statistics');
+    Route::post('/sets/analytics', 'getAnalytics')->name('question-set-analytics');
+    
+    // Dashboard/Summary
+    Route::post('/dashboard', 'getDashboard')->name('question-dashboard');
 });
