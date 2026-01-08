@@ -92,6 +92,84 @@ class QuestionSetService
             ];
         });
     }
+        /**
+     * Start a new mock test
+     */
+    public function startMockTest(int $questionSetId): array
+    {
+        return DB::transaction(function () use ($questionSetId) {
+            $userId = Auth::id();
+
+            $analytics = QuestionSetAnalytic::where('user_id', $userId)
+                ->where('question_set_id', $questionSetId)
+                ->first();
+
+            // Check if analytics exists
+            if (! $analytics) {
+                throw new Exception('You must complete practice mode before starting a mock test.');
+            }
+
+            // Validate can start mock test
+            if (! $analytics->canStartMockTest()) {
+                if (! $analytics->practice_completed) {
+                    throw new Exception('You must complete practice mode before starting a mock test.');
+                }
+                if ($analytics->hasCompletedAllMockTests()) {
+                    throw new Exception('You have already completed all 3 mock test attempts.');
+                }
+                throw new Exception('Cannot start mock test at this time.');
+            }
+
+            // Check if there's already an in-progress mock test
+            $existingAttempt = MockTestAttempt::where('user_id', $userId)
+                ->where('question_set_id', $questionSetId)
+                ->where('status', MockTestAttempt::STATUS_IN_PROGRESS)
+                ->first();
+
+            if ($existingAttempt) {
+                throw new Exception('You already have a mock test in progress. Please complete it first.');
+            }
+
+            // Increment mock test attempts
+            $analytics->mock_test_attempts++;
+            $analytics->current_mode = 'mock_test';
+            $analytics->current_mock_attempt_number = $analytics->mock_test_attempts;
+            $analytics->current_mock_questions_answered = 0;
+            $analytics->updated_by = $userId;
+            $analytics->save();
+
+            // Create new mock test attempt record
+            $totalQuestions = Question::where('question_set_id', $questionSetId)->count();
+
+            if ($totalQuestions === 0) {
+                throw new Exception('No questions available in this question set.');
+            }
+
+            $mockAttempt = MockTestAttempt::create([
+                'user_id' => $userId,
+                'question_set_id' => $questionSetId,
+                'attempt_number' => $analytics->mock_test_attempts,
+                'total_questions' => $totalQuestions,
+                'status' => MockTestAttempt::STATUS_IN_PROGRESS,
+                'created_by' => $userId,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Mock test started successfully',
+                'mock_attempt' => [
+                    'id' => $mockAttempt->id,
+                    'attempt_number' => $mockAttempt->attempt_number,
+                    'total_questions' => $mockAttempt->total_questions,
+                    'status' => $mockAttempt->status,
+                ],
+                'analytics' => [
+                    'current_mode' => $analytics->current_mode,
+                    'remaining_attempts' => $analytics->getRemainingMockAttempts(),
+                ],
+            ];
+        });
+    }
 
     /**
      * Validate if user can submit answer in current state
@@ -216,84 +294,7 @@ class QuestionSetService
         $mockAttempt->save();
     }
 
-    /**
-     * Start a new mock test
-     */
-    public function startMockTest(int $questionSetId): array
-    {
-        return DB::transaction(function () use ($questionSetId) {
-            $userId = Auth::id();
 
-            $analytics = QuestionSetAnalytic::where('user_id', $userId)
-                ->where('question_set_id', $questionSetId)
-                ->first();
-
-            // Check if analytics exists
-            if (! $analytics) {
-                throw new Exception('You must complete practice mode before starting a mock test.');
-            }
-
-            // Validate can start mock test
-            if (! $analytics->canStartMockTest()) {
-                if (! $analytics->practice_completed) {
-                    throw new Exception('You must complete practice mode before starting a mock test.');
-                }
-                if ($analytics->hasCompletedAllMockTests()) {
-                    throw new Exception('You have already completed all 3 mock test attempts.');
-                }
-                throw new Exception('Cannot start mock test at this time.');
-            }
-
-            // Check if there's already an in-progress mock test
-            $existingAttempt = MockTestAttempt::where('user_id', $userId)
-                ->where('question_set_id', $questionSetId)
-                ->where('status', MockTestAttempt::STATUS_IN_PROGRESS)
-                ->first();
-
-            if ($existingAttempt) {
-                throw new Exception('You already have a mock test in progress. Please complete it first.');
-            }
-
-            // Increment mock test attempts
-            $analytics->mock_test_attempts++;
-            $analytics->current_mode = 'mock_test';
-            $analytics->current_mock_attempt_number = $analytics->mock_test_attempts;
-            $analytics->current_mock_questions_answered = 0;
-            $analytics->updated_by = $userId;
-            $analytics->save();
-
-            // Create new mock test attempt record
-            $totalQuestions = Question::where('question_set_id', $questionSetId)->count();
-
-            if ($totalQuestions === 0) {
-                throw new Exception('No questions available in this question set.');
-            }
-
-            $mockAttempt = MockTestAttempt::create([
-                'user_id' => $userId,
-                'question_set_id' => $questionSetId,
-                'attempt_number' => $analytics->mock_test_attempts,
-                'total_questions' => $totalQuestions,
-                'status' => MockTestAttempt::STATUS_IN_PROGRESS,
-                'created_by' => $userId,
-            ]);
-
-            return [
-                'success' => true,
-                'message' => 'Mock test started successfully',
-                'mock_attempt' => [
-                    'id' => $mockAttempt->id,
-                    'attempt_number' => $mockAttempt->attempt_number,
-                    'total_questions' => $mockAttempt->total_questions,
-                    'status' => $mockAttempt->status,
-                ],
-                'analytics' => [
-                    'current_mode' => $analytics->current_mode,
-                    'remaining_attempts' => $analytics->getRemainingMockAttempts(),
-                ],
-            ];
-        });
-    }
 
     /**
      * Get question set progress for a user
@@ -448,23 +449,27 @@ class QuestionSetService
     /**
      * Get all question sets with user progress
      */
-    public function getQuestionSets(string $orderBy = 'created_at', string $order = 'desc'): Builder
+    public function getQuestionSets(string $current_mode = 'practice', string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         return QuestionSet::withCount('questions')
-            ->with(['analytics' => function ($query) {
-                $query->where('user_id', Auth::id());
+            ->with(['analytics' => function ($query) use ($current_mode) {
+                $query->where('user_id', Auth::id())->where('current_mode', $current_mode);
             }])
+            ->whereHas('analytics', function ($query) use ($current_mode) {
+                $query->where('current_mode', $current_mode);
+            })
             ->orderBy($orderBy, $order);
     }
 
     /**
      * Get questions for a specific question set
      */
-     public function getQuestions(?int $questionSetId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+    public function getQuestions(?int $questionSetId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         return Question::with('questionSet')->where('question_set_id', $questionSetId)->orderBy($orderBy, $order);
-      
+
     }
+
     /**
      * Find a question set by ID
      */

@@ -33,15 +33,21 @@ class QuestionController extends Controller
             if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
+            $validator = Validator::make($request->all(), [
+                'current_mode' => 'nullable|in:practice,mock_test',
+                'per_page' => 'nullable|integer|min:1',
+            ]);
 
-            $questions = $this->questionSetService->getQuestionSets();
+            if ($validator->fails()) {
+                return sendResponse(false,$validator->errors()->first(),null,
+                    Response::HTTP_UNPROCESSABLE_ENTITY
+                );
+            }
+            $current_mode = $request->input('current_mode', 'practice');
+            $questions = $this->questionSetService->getQuestionSets($current_mode);
             $contents = $questions->paginate($request->input('per_page', 10));
 
-            return sendResponse(
-                true,
-                'Questions Set data fetched successfully.',
-                QuestionSetResource::collection($contents),
-                Response::HTTP_OK
+            return sendResponse(true,'Questions Set data fetched successfully.',QuestionSetResource::collection($contents), Response::HTTP_OK
             );
         } catch (Throwable $e) {
             Log::error('Get Question Sets Error: '.$e->getMessage());
@@ -72,13 +78,13 @@ class QuestionController extends Controller
             $question = $this->questionSetService->getQuestions($questionSetId);
             $questions = $question->paginate($request->input('per_page', 10));
 
-            return sendResponse( true,  'Questions fetched successfully.',  QuestionResource::collection($questions), Response::HTTP_OK
+            return sendResponse(true, 'Questions fetched successfully.', QuestionResource::collection($questions), Response::HTTP_OK
             );
 
         } catch (Throwable $e) {
-            Log::error('Get Questions Error', ['message' => $e->getMessage(),'trace' => $e->getTraceAsString(),]);
+            Log::error('Get Questions Error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 
-            return sendResponse(false,  'Something went wrong', null,Response::HTTP_INTERNAL_SERVER_ERROR
+            return sendResponse(false, 'Something went wrong', null, Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
     }
