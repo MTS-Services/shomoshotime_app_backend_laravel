@@ -185,7 +185,7 @@ class AuthenticationController extends Controller
                 // Revoke the current access token.
                 $request->user()->token()->revoke();
                 // Optionally delete the user device record to enforce a new login on next attempt
-                $request->user()->userDevice()->delete();
+                $request->user()->userDevices()->delete();
                 return sendResponse(true, __('Logged out successfully'), null, Response::HTTP_OK);
             }
             return sendResponse(false, __('Unauthenticated'), null, Response::HTTP_UNAUTHORIZED);

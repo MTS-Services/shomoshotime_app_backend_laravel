@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
@@ -85,7 +86,10 @@ class User extends Authenticatable implements OAuthenticatable, MustVerifyEmail
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
-
+    public function userDevices(): HasMany
+    {
+        return $this->hasMany(UserDevice::class, 'user_id', 'id');
+    }
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by', 'id');
