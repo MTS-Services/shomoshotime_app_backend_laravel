@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash; // Added for password hashing
+use Illuminate\Validation\ValidationException;
 
 class UserService
 {
@@ -124,12 +125,17 @@ class UserService
 
     public function deleteUser(User $user): void
     {
-        
-        $user->delete();
+
+        if ($user->isAdmin()) {
+            throw ValidationException::withMessages([
+                'user' => 'Admin user cannot be deleted.',
+            ]);
+        }
 
         if ($user->image) {
             $this->fileDelete($user->image);
         }
+        $user->delete();
     }
 
     // /**
