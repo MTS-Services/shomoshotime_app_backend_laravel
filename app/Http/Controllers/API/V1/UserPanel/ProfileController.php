@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\UserResource;
 use App\Services\UserManagement\UserService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class ProfileController extends Controller
@@ -40,11 +40,22 @@ class ProfileController extends Controller
     public function updateProfile(Request $request)
     {
         try {
-             $user = request()->user();
+            $user = request()->user();
             if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
-            $data = $request->all();
+            $validator = Validator::make($request->all(), [
+                'name' => 'sometimes|required|string|max:255',
+                'email' => 'sometimes|required|string|email|max:255|unique:users,email,'.$user->id,
+                'password' => 'sometimes|nullable|string|min:8|confirmed',
+                'file' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
+
+            if ($validator->fails()) {
+                 return sendResponse(false,$validator->errors()->first(),null, Response::HTTP_UNPROCESSABLE_ENTITY
+                );
+            }
+            $data = $validator->validated();
 
             $image = $request->file('file') ?? null;
 
