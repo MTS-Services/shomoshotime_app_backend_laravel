@@ -22,7 +22,7 @@ class ContentService
 
     public function getContents($type = 0,?string $file_type = null, ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
-        $query = Content::orderBy($orderBy, $order)->isPublish()->latest();
+        $query = Content::orderBy($orderBy, $order)->latest();
         if (! is_null($type)) {
             $query->where('type', $type);
         }
