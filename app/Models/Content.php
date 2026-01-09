@@ -27,6 +27,7 @@ class Content extends BaseModel
         'title',
         'subtitle',
         'is_publish',
+        'total_pages',
         'category',
         'type',
         'file',
