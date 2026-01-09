@@ -184,7 +184,7 @@ class UserController extends Controller
         if (! $user) {
             return sendResponse(false, 'User not found', null, Response::HTTP_NOT_FOUND);
         }
-
+        
         $this->userService->deleteUser($user);
 
         return sendResponse(
