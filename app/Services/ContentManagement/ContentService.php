@@ -7,6 +7,7 @@ use App\Models\Content;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Smalot\PdfParser\Parser;
 
 class ContentService
 {
@@ -20,19 +21,20 @@ class ContentService
         //
     }
 
-    public function getContents($type = 0,?string $file_type = null, ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+    public function getContents($type = 0, ?string $file_type = null, ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         $query = Content::orderBy($orderBy, $order)->latest();
         if (! is_null($type)) {
             $query->where('type', $type);
         }
-        
+
         if (! is_null($category)) {
             $query->where('category', $category);
         }
         if (! is_null($file_type)) {
             $query->where('file_type', $file_type);
         }
+
         return $query;
     }
 
@@ -49,23 +51,30 @@ class ContentService
     public function createContent(array $data, $file): Content
     {
         return DB::transaction(function () use ($data, $file) {
-            
+
             if ($file) {
                 $mimeType = $file->getMimeType();
                 $data['file_type'] = $this->detectFileType($mimeType);
+
                 if ($data['file_type'] === 'invalid') {
-                    return [
-                        'data' => null,
-                        'message' => 'Only audio and PDF files are allowed.',
-                    ];
+                    throw new \Exception('Only audio and PDF files are allowed.');
                 }
 
+                // Upload file
                 $data['file'] = $this->handleFileUpload(
                     $file,
                     'contents',
                     $data['file_type']
                 );
+
+                if ($data['file_type'] === 'pdf' && $data['type'] === Content::TYPE_STUDY_GUIDE) {
+                    $parser = new Parser;
+                    $pdf = $parser->parseFile($file->getRealPath());
+
+                    $data['total_pages'] = count($pdf->getPages());
+                }
             }
+
             $data['created_by'] = Auth::id();
 
             return Content::create($data);
@@ -85,26 +94,33 @@ class ContentService
     {
         return DB::transaction(function () use ($content, $data, $file) {
 
-             if ($file) {
-                    $mimeType = $file->getMimeType();
-                    $data['file_type'] = $this->detectFileType($mimeType);
+            if ($file) {
+                $mimeType = $file->getMimeType();
+                $data['file_type'] = $this->detectFileType($mimeType);
 
-                    if ($data['file_type'] === 'invalid') {
-                        return [
-                            'data' => null,
-                            'message' => 'Only audio and PDF files are allowed.',
-                        ];
-                    }
-                    if (! empty($content->file)) {
-                        $this->fileDelete($content->file);
-                    }
-
-                    $data['file'] = $this->handleFileUpload(
-                        $file,
-                        'contents',
-                        $data['file_type']
-                    );
+                if ($data['file_type'] === 'invalid') {
+                    throw new \Exception('Only audio and PDF files are allowed.');
                 }
+
+                if (! empty($content->file)) {
+                    $this->fileDelete($content->file);
+                }
+
+                $data['file'] = $this->handleFileUpload(
+                    $file,
+                    'contents',
+                    $data['file_type']
+                );
+
+                if ($data['file_type'] === 'pdf' && $data['type'] === Content::TYPE_STUDY_GUIDE) {
+                    $parser = new Parser;
+                    $pdf = $parser->parseFile($file->getRealPath());
+
+                    $data['total_pages'] = count($pdf->getPages());
+                } else {
+                    $data['total_pages'] = null;
+                }
+            }
 
             $data['updated_by'] = Auth::id();
             $content->update($data);
