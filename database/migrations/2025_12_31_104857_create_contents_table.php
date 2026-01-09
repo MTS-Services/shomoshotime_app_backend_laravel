@@ -21,6 +21,7 @@ return new class extends Migration
 
             $table->string('title');
             $table->string('subtitle')->nullable();
+            $table->integer('total_pages')->default(0);
             $table->string('category');
             $table->string('file')->nullable();
             $table->string('file_type')->nullable();
