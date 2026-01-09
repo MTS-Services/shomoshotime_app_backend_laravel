@@ -1,9 +1,9 @@
 <?php
 
-
 use App\Http\Controllers\API\V1\UserPanel\ContentController;
 use App\Http\Controllers\API\V1\UserPanel\ProfileController;
 use App\Http\Controllers\API\V1\UserPanel\QuestionController;
+use App\Http\Controllers\API\V1\UserPanel\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(ContentController::class)->prefix('content')->group(function () {
@@ -37,4 +37,8 @@ Route::controller(QuestionController::class)->prefix('question')->group(function
 Route::controller(ProfileController::class)->prefix('profile')->group(function () {
     Route::post('/', 'getProfile')->name('profile');
     Route::post('/update', 'updateProfile')->name('update.profile');
+});
+
+Route::controller(SubscriptionController::class)->prefix('subscription')->group(function () {
+    Route::post('/list', 'getSubscriptions')->name('subscription.list');
 });
