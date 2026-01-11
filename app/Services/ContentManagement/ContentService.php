@@ -4,6 +4,7 @@ namespace App\Services\ContentManagement;
 
 use App\Http\Traits\FileManagementTrait;
 use App\Models\Content;
+use App\Models\StudyGuideActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,12 +14,23 @@ class ContentService
 {
     use FileManagementTrait;
 
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
+    public function storeNextPageData(int $userId, int $contentId, int $pageNumber): ?StudyGuideActivity
     {
-        //
+        $activity = StudyGuideActivity::where('user_id', $userId)
+            ->where('content_id', $contentId)
+            ->where('page_number', $pageNumber)
+            ->first();
+
+        if (!$activity) {
+            $activity = StudyGuideActivity::create([
+                'user_id' => $userId,
+                'content_id' => $contentId,
+                'page_number' => $pageNumber,
+                'created_by' => $userId,
+                'updated_by' => $userId,
+            ]);
+        }
+        return $activity;
     }
 
     public function getContents($type = 0, ?string $file_type = null, ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder

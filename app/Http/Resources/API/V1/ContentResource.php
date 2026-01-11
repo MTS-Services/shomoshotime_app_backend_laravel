@@ -27,10 +27,13 @@ class ContentResource extends JsonResource
             'type_label' => Content::getTypeList()[$this->type] ?? 'N/A',
             'is_publish' => $this->is_publish,
             'is_publish_label' => Content::getPublishList()[$this->is_publish] ?? 'N/A',
+            'total_pages' => $this->total_pages,
+            'study_guide_activities_count' => $this->when($this->relationLoaded('studyGuideActivities'), $this->studyGuideActivities),
 
              
             'created_at' => $this->created_at_formatted ?? $this->created_at,
             'updated_at' => $this->updated_at_formatted ?? $this->updated_at,
+            
             'creater_name' => $this->creater?->name ?? 'N/A',
             'updater_name' => $this->updater?->name ?? 'N/A',
         ];

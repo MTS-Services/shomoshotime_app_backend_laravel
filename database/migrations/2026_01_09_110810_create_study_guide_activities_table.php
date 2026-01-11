@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('sort_order')->default(0);
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('content_id');
-            $table->integer('total_page_attempts')->default(1);
+            $table->integer('page_number')->default(1);
            
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreign('content_id')->references('id')->on('contents')->cascadeOnDelete()->cascadeOnUpdate();
