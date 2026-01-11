@@ -21,7 +21,7 @@ class ContentService
             ->where('page_number', $pageNumber)
             ->first();
 
-        if (!$activity) {
+        if (! $activity) {
             $activity = StudyGuideActivity::create([
                 'user_id' => $userId,
                 'content_id' => $contentId,
@@ -30,6 +30,7 @@ class ContentService
                 'updated_by' => $userId,
             ]);
         }
+
         return $activity;
     }
 
@@ -78,8 +79,8 @@ class ContentService
                     'contents',
                     $data['file_type']
                 );
-
-                if ($data['file_type'] === 'pdf' && $data['type'] === Content::TYPE_STUDY_GUIDE) {
+                $data['type'] = 0;
+                if ($data['file_type'] === 'pdf' && $data['type'] == Content::TYPE_STUDY_GUIDE) {
                     $parser = new Parser;
                     $pdf = $parser->parseFile($file->getRealPath());
 
@@ -123,17 +124,15 @@ class ContentService
                     'contents',
                     $data['file_type']
                 );
-
-                if ($data['file_type'] === 'pdf' && $data['type'] === Content::TYPE_STUDY_GUIDE) {
+                $data['type'] = 0;
+                if ($data['file_type'] === 'pdf' && $data['type'] == Content::TYPE_STUDY_GUIDE) {
                     $parser = new Parser;
                     $pdf = $parser->parseFile($file->getRealPath());
-
                     $data['total_pages'] = count($pdf->getPages());
                 } else {
                     $data['total_pages'] = null;
                 }
             }
-
             $data['updated_by'] = Auth::id();
             $content->update($data);
 

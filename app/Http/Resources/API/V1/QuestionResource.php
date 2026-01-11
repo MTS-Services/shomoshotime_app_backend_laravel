@@ -18,7 +18,7 @@ class QuestionResource extends JsonResource
             'id' => $this->id,
             'sort_order' => $this->sort_order,
             'question_set_id' => $this->question_set_id,
-            'file' => $this->file,
+            'file' => storage_url($this->file),
             'question' => $this->question,
             'option_a' => $this->option_a,
             'option_b' => $this->option_b,
