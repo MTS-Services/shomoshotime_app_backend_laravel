@@ -28,12 +28,12 @@ class ContentResource extends JsonResource
             'is_publish' => $this->is_publish,
             'is_publish_label' => Content::getPublishList()[$this->is_publish] ?? 'N/A',
             'total_pages' => $this->total_pages,
-            'study_guide_activities_count' => $this->when($this->relationLoaded('studyGuideActivities'), $this->studyGuideActivities),
+            'study_guide_activities_count' => $this->study_guide_activities_count ?? 0,
+            'percent_completed' => $this->total_pages > 0 ? round(($this->study_guide_activities_count / $this->total_pages) * 100, 2) : 0,
 
-             
             'created_at' => $this->created_at_formatted ?? $this->created_at,
             'updated_at' => $this->updated_at_formatted ?? $this->updated_at,
-            
+
             'creater_name' => $this->creater?->name ?? 'N/A',
             'updater_name' => $this->updater?->name ?? 'N/A',
         ];

@@ -67,6 +67,7 @@ class ContentController extends Controller
             $file_type = $request->input('file_type');
             $category = $request->input('category');
             $query = $this->service->getContents($category, $file_type);
+            $query->withCount('studyGuideActivities');
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('title', $searchQuery)
@@ -75,7 +76,6 @@ class ContentController extends Controller
 
                 return sendResponse(true, 'Search data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
             }
-            $query->with('studyGuideActivities');
             $contents = $query->paginate($request->input('per_page', 10));
 
             return sendResponse(true, 'Study guides data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
