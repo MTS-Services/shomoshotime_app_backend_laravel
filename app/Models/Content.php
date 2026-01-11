@@ -93,6 +93,16 @@ class Content extends BaseModel
     {
         return $this->hasMany(Chapter::class, 'content_id', 'id');
     }
+
+    public function studyGuideActivities(): HasMany
+    {
+        return $this->hasMany(StudyGuideActivity::class, 'content_id', 'id');
+    }
+
+    public function flashCardActivities(): HasMany
+    {
+        return $this->hasMany(FlashCardActivity::class, 'content_id', 'id');
+    }
    
     /* ===================== ===================== ===================== =====================
                                     End of Relation's

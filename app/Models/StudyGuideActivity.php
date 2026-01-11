@@ -10,7 +10,7 @@ class StudyGuideActivity extends BaseModel
         'sort_order',
         'user_id',
         'content_id',
-        'total_page_attempts',
+        'page_number',
 
         'created_by',
         'updated_by',
