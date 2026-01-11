@@ -11,6 +11,7 @@ Route::controller(ContentController::class)->prefix('content')->group(function (
     Route::post('/flash-cards', 'flashCards')->name('flash-cards');
     Route::post('/flash-cards/sets', 'flashCardSets')->name('flash-cards.sets');
     Route::post('/next-page', 'nextPage')->name('next-page');
+    Route::post('/flash-cards/next-question', 'nextQuestion')->name('flash-cards.next-question');
 });
 // Route::controller(QuestionController::class)->prefix('question')->group(function () {
 //     Route::post('/sets', 'getQuestionSets')->name('question-sets');

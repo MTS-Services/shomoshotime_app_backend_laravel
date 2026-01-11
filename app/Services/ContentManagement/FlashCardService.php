@@ -32,6 +32,12 @@ class FlashCardService
         return $query;
     }
 
+    public function findFlashCard(int $contentId, int $cardId): ?FlashCard
+    {
+        return FlashCard::where('content_id', $contentId)->where('id', $cardId)->first();
+        
+    }
+
     public function storeNextQuestionData(int $userId, int $contentId, int $cardId): ?FlashCardActivity
     {
         $activity = FlashCardActivity::where('user_id', $userId)

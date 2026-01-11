@@ -71,7 +71,7 @@ class ContentController extends Controller
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('title', $searchQuery)
-                    ->orWhereLike('subtitle', $searchQuery); 
+                    ->orWhereLike('subtitle', $searchQuery);
                 $contents = $query->paginate($request->input('per_page', 10));
 
                 return sendResponse(true, 'Search data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
@@ -96,7 +96,7 @@ class ContentController extends Controller
 
             $category = $request->input('category');
             $query = $this->flashCardService->getFlashCards($category);
-            $query->withCount(relations: 'flashCardActivities');
+            $query->withCount(['flashCardActivities','flashCards']);
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('title', $searchQuery)
@@ -115,6 +115,7 @@ class ContentController extends Controller
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
     public function nextQuestion(Request $request)
     {
         try {
@@ -132,15 +133,20 @@ class ContentController extends Controller
             $data = $validator->validated();
             $contentId = $data['content_id'];
             $cardId = $data['card_id'];
+            $flashCard = $this->flashCardService->findFlashCard($contentId, $cardId);
+            if (! $flashCard) {
+                return sendResponse(false,  'This flash card does not belong to the given content.', null, Response::HTTP_NOT_FOUND);
+            }
             $this->flashCardService->storeNextQuestionData($user->id, $contentId, $cardId);
 
-            return sendResponse(true, 'Next question data fetched successfully.', null, Response::HTTP_OK);
+            return sendResponse(true, 'Next question data stored successfully.', null, Response::HTTP_OK);
         } catch (Throwable $e) {
             Log::error('Get Next Question Error: '.$e->getMessage());
 
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
     public function flashCardSets(Request $request)
     {
         try {
