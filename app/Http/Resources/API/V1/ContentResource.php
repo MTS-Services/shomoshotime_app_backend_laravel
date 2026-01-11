@@ -29,7 +29,11 @@ class ContentResource extends JsonResource
             'is_publish_label' => Content::getPublishList()[$this->is_publish] ?? 'N/A',
             'total_pages' => $this->total_pages,
             'study_guide_activities_count' => $this->study_guide_activities_count ?? 0,
-            'percent_completed' => $this->total_pages > 0 ? round(($this->study_guide_activities_count / $this->total_pages) * 100, 2) : 0,
+            'study_guide_percent_completed' => $this->total_pages > 0 ? round(($this->study_guide_activities_count / $this->total_pages) * 100, 2) : 0,
+
+            'flash_card_activities_count' => $this->flash_card_activities_count ?? 0,
+            'flash_cards_count' => $this->flash_cards_count ?? 0,
+            'flash_card_percent_completed' => $this->flash_cards_count > 0 ? round(($this->flash_card_activities_count / $this->flash_cards_count) * 100, 2) : 0,
 
             'created_at' => $this->created_at_formatted ?? $this->created_at,
             'updated_at' => $this->updated_at_formatted ?? $this->updated_at,
