@@ -96,6 +96,7 @@ class ContentController extends Controller
 
             $category = $request->input('category');
             $query = $this->flashCardService->getFlashCards($category);
+            $query->withCount(relations: 'flashCardActivities');
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('title', $searchQuery)
@@ -114,7 +115,32 @@ class ContentController extends Controller
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+    public function nextQuestion(Request $request)
+    {
+        try {
+            $user = request()->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+            $validator = Validator::make($request->all(), [
+                'content_id' => 'required|integer|exists:contents,id',
+                'card_id' => 'required|integer|exists:flash_cards,id',
+            ]);
+            if ($validator->fails()) {
+                return sendResponse(false, 'Validation Error', $validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $data = $validator->validated();
+            $contentId = $data['content_id'];
+            $cardId = $data['card_id'];
+            $this->flashCardService->storeNextQuestionData($user->id, $contentId, $cardId);
 
+            return sendResponse(true, 'Next question data fetched successfully.', null, Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Get Next Question Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
     public function flashCardSets(Request $request)
     {
         try {

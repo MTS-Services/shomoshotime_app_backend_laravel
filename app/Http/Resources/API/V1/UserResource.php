@@ -19,7 +19,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name ?? 'N/A',
             'email' => $this->email ?? 'N/A',
-            'image' => $this->image ?? 'N/A',
+            'image' => storage_url($this->image) ?? 'N/A',
             'status' => $this->status,
             'is_admin' => $this->is_admin,
             'status_label' => $this->status_label,

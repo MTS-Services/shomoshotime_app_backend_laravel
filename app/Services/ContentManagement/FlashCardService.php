@@ -4,6 +4,7 @@ namespace App\Services\ContentManagement;
 
 use App\Models\Content;
 use App\Models\FlashCard;
+use App\Models\FlashCardActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,10 +21,10 @@ class FlashCardService
         //
     }
 
-    public function getFlashCards( ?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
+    public function getFlashCards(?string $category = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         $query = Content::orderBy($orderBy, $order)->isPublish()->where('type', 1)->latest();
-        
+
         if (! is_null($category)) {
             $query->where('category', $category);
         }
@@ -31,10 +32,30 @@ class FlashCardService
         return $query;
     }
 
+    public function storeNextQuestionData(int $userId, int $contentId, int $cardId): ?FlashCardActivity
+    {
+        $activity = FlashCardActivity::where('user_id', $userId)
+            ->where('content_id', $contentId)
+            ->where('card_id', $cardId)
+            ->first();
+
+        if (! $activity) {
+            $activity = FlashCardActivity::create([
+                'user_id' => $userId,
+                'content_id' => $contentId,
+                'card_id' => $cardId,
+                'created_by' => $userId,
+                'updated_by' => $userId,
+            ]);
+        }
+
+        return $activity;
+    }
+
     public function getFlashCardsByContent(?int $contentId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         return FlashCard::with('content')->where('content_id', $contentId)->orderBy($orderBy, $order);
-      
+
     }
 
     public function createFlashCard(array $data): FlashCard|array
