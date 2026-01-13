@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\API\V1\AuthenticationController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+
+Broadcast::routes(['middleware' => ['auth:api']]);
 
 // Public routes
 Route::controller(AuthenticationController::class)->name('v1.auth.')->prefix('v1/auth')->group(function () {

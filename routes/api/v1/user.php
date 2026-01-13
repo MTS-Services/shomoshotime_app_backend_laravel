@@ -4,6 +4,7 @@ use App\Http\Controllers\API\V1\UserPanel\ContentController;
 use App\Http\Controllers\API\V1\UserPanel\ProfileController;
 use App\Http\Controllers\API\V1\UserPanel\QuestionController;
 use App\Http\Controllers\API\V1\UserPanel\SubscriptionController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(ContentController::class)->prefix('content')->group(function () {
@@ -16,6 +17,10 @@ Route::controller(ContentController::class)->prefix('content')->group(function (
 // Route::controller(QuestionController::class)->prefix('question')->group(function () {
 //     Route::post('/sets', 'getQuestionSets')->name('question-sets');
 // });
+
+Route::controller(NotificationController::class)->group(function () {
+    Route::post('/send-notification', 'sendNotification')->name('send-notification');
+});
 
 Route::controller(QuestionController::class)->prefix('question')->group(function () {    
     // Question Sets
