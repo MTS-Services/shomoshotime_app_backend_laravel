@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\API\V1\NotificationController;
 use App\Http\Controllers\API\V1\UserPanel\ContentController;
 use App\Http\Controllers\API\V1\UserPanel\ProfileController;
 use App\Http\Controllers\API\V1\UserPanel\QuestionController;
 use App\Http\Controllers\API\V1\UserPanel\SubscriptionController;
-use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(ContentController::class)->prefix('content')->group(function () {
