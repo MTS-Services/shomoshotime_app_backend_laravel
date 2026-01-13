@@ -8,17 +8,21 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 class UserNotificationEvent implements ShouldBroadcast
 {
     public $message;
+
     public $userId;
 
-    public function __construct($userId, $message)
+    public $title;
+
+    public function __construct($userId, $title, $message)
     {
         $this->userId = $userId;
+        $this->title = $title;
         $this->message = $message;
     }
 
     public function broadcastOn()
     {
-        return new PrivateChannel('user.' . $this->userId);
+        return new PrivateChannel('user.'.$this->userId);
     }
 
     public function broadcastAs()
@@ -30,6 +34,7 @@ class UserNotificationEvent implements ShouldBroadcast
     {
         return [
             'user_id' => $this->userId,
+            'title' => $this->title,
             'message' => $this->message,
         ];
     }

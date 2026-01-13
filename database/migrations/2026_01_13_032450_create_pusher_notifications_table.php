@@ -14,15 +14,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('notifications', function (Blueprint $table) {
+        Schema::create('pusher_notifications', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('sort_order')->default(0);
-
+            
             $table->unsignedBigInteger('user_id');
             $table->string('title');
             $table->longText('message');
+            $table->boolean('is_read')->default(0);
 
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete()->cascadeOnUpdate();            
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete()->cascadeOnUpdate();
+
+            
             $table->timestamps();
             $table->softDeletes();
             $this->addAuditColumns($table);
@@ -34,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notifications');
+        Schema::dropIfExists('pusher_notifications');
     }
 };
