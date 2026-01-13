@@ -2,18 +2,148 @@
 
 namespace App\Services;
 
+use App\Models\Content;
+use App\Models\FlashCard;
+use App\Models\FlashCardActivity;
+use App\Models\MockTestAttempt;
+use App\Models\Question;
+use App\Models\QuestionAnswer;
+use App\Models\QuestionSet;
 use App\Models\StudyGuideActivity;
 
 class AnalyticsService
 {
-    public function getAnalyticsData($userId)
+
+    public function overallUserStudyGuideProgress(int $userId): array
     {
-        $all = StudyGuideActivity::with(['content' => (function ($q) {
-                $q->isPublish()->studyGuide()->select('id','total_pages');
-            })])
+        // Total pages from all published study guides
+        $totalPages = Content::studyGuide()
+            ->isPublish()
+            ->sum('total_pages');
+
+        // Total unique pages attempted by user
+        $attemptedPages = StudyGuideActivity::where('user_id', $userId)
             ->whereHas('content', function ($q) {
-                $q->isPublish()->studyGuide();
+                $q->where('type', Content::TYPE_STUDY_GUIDE)
+                    ->where('is_publish', Content::IS_PUBLISH);
             })
-            ->where('user_id', $userId)->get();
+            ->distinct(['content_id', 'page_number'])
+            ->count();
+
+        $progress = $totalPages > 0
+            ? round(($attemptedPages / $totalPages) * 100, 2)
+            : 0;
+
+        return [
+            'attempted_pages' => $attemptedPages,
+            'total_pages' => $totalPages,
+            'progress_percent' => $progress,
+        ];
+    }
+
+    public function overallUserFlashCardProgress(int $userId): array
+    {
+        // Total flashcards from all published flashcard contents
+        $totalCards = FlashCard::whereHas('content', function ($q) {
+            $q->where('type', Content::TYPE_FLASHCARD)
+                ->where('is_publish', Content::IS_PUBLISH);
+        })->count();
+
+        // Total unique cards attempted by user
+        $attemptedCards = FlashCardActivity::where('user_id', $userId)
+            ->whereHas('content', function ($q) {
+                $q->where('type', Content::TYPE_FLASHCARD)
+                    ->where('is_publish', Content::IS_PUBLISH);
+            })
+            ->distinct('card_id')
+            ->count('card_id');
+
+        $progress = $totalCards > 0
+            ? round(($attemptedCards / $totalCards) * 100, 2)
+            : 0;
+
+        return [
+            'attempted_cards' => $attemptedCards,
+            'total_cards' => $totalCards,
+            'progress_percent' => $progress,
+        ];
+    }
+
+
+    public function getUserOverallPracticeAccuracy($userId): float
+    {
+        $answers = QuestionAnswer::where('user_id', $userId)
+            ->where(function ($q) {
+                $q->where('practice_correct_attempts', '>', 0)
+                    ->orWhere('practice_failed_attempts', '>', 0);
+            })
+            ->get();
+
+        $correct = $answers->sum('practice_correct_attempts');
+        $failed = $answers->sum('practice_failed_attempts');
+
+        $totalAttempts = $correct + $failed;
+
+        if ($totalAttempts === 0) {
+            return 0;
+        }
+
+        return round(($correct / $totalAttempts) * 100, 2);
+    }
+
+    public function getUserOverallPracticeProgress($userId): float
+    {
+        $totalQuestions = Question::count();
+
+        if ($totalQuestions === 0) {
+            return 0;
+        }
+
+        $answeredQuestions = QuestionAnswer::where('user_id', $userId)
+            ->where(function ($q) {
+                $q->where('practice_correct_attempts', '>', 0)
+                    ->orWhere('practice_failed_attempts', '>', 0);
+            })
+            ->distinct('question_id')
+            ->count('question_id');
+
+        return round(($answeredQuestions / $totalQuestions) * 100, 2);
+    }
+
+
+    public function getUserOverallMockAccuracy($userId): float
+    {
+        $attempts = MockTestAttempt::where('user_id', $userId)
+            ->where('status', MockTestAttempt::STATUS_COMPLETED)
+            ->get();
+
+        if ($attempts->isEmpty()) {
+            return 0;
+        }
+
+        $totalCorrect = $attempts->sum('correct_answers');
+        $totalQuestions = $attempts->sum('total_questions');
+
+        if ($totalQuestions === 0) {
+            return 0;
+        }
+
+        return round(($totalCorrect / $totalQuestions) * 100, 2);
+    }
+
+    public function getOverallMockProgress($userId): float
+    {
+        $totalQuestionSets = QuestionSet::count();
+
+        if ($totalQuestionSets === 0) {
+            return 0;
+        }
+
+        $maxAttempts = $totalQuestionSets * 3;
+
+        $usedAttempts = MockTestAttempt::where('user_id', $userId)
+            ->count();
+
+        return round(($usedAttempts / $maxAttempts) * 100, 2);
     }
 }
