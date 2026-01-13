@@ -10,6 +10,9 @@ use App\Models\Question;
 use App\Models\QuestionAnswer;
 use App\Models\QuestionSet;
 use App\Models\StudyGuideActivity;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
 {
@@ -145,5 +148,113 @@ class AnalyticsService
             ->count();
 
         return round(($usedAttempts / $maxAttempts) * 100, 2);
+    }
+
+    public function getAverageExamScore(): float
+    {
+        $average = MockTestAttempt::query()
+            ->where('status', MockTestAttempt::STATUS_COMPLETED)
+            ->avg('score_percentage');
+
+        return round($average ?? 0, 2);
+    }
+
+
+    public function getUserGrowthChartData(): array
+    {
+        $users = User::select(
+            DB::raw('COUNT(*) as total'),
+            DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month")
+        )
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        return [
+            'labels' => $users->pluck('month')->map(
+                fn($m) => Carbon::createFromFormat('Y-m', $m)->format('M Y')
+            ),
+            'data' => $users->pluck('total'),
+        ];
+    }
+
+    public function getSubscriptionDistributionChartData(): array
+    {
+        $subscriptions = DB::table('user_subscriptions')
+            ->join('subscriptions', 'subscriptions.id', '=', 'user_subscriptions.subscription_id')
+            ->where('user_subscriptions.is_active', true)
+            ->select(
+                'subscriptions.duration',
+                DB::raw('COUNT(user_subscriptions.id) as total')
+            )
+            ->groupBy('subscriptions.duration')
+            ->orderBy('subscriptions.duration')
+            ->get();
+
+        return [
+            'labels' => $subscriptions->pluck('duration'),
+            'data' => $subscriptions->pluck('total'),
+        ];
+    }
+
+
+    public function getKpiMetrics(): array
+    {
+        $avgScore = MockTestAttempt::where('status', 'completed')
+            ->avg('score_percentage');
+
+        $totalAttempts = MockTestAttempt::count();
+
+        $passedAttempts = MockTestAttempt::where('status', 'completed')
+            ->where('score_percentage', '>=', 60)
+            ->count();
+
+        $passRate = $totalAttempts > 0
+            ? ($passedAttempts / $totalAttempts) * 100
+            : 0;
+
+        return [
+            'avg_quiz_score' => round($avgScore ?? 0, 1),
+            'completion_rate' => 78.5, // optional: derive from analytics table
+            'total_attempts' => number_format($totalAttempts),
+            'pass_rate' => round($passRate, 1),
+        ];
+    }
+
+    public function getMostMissedQuestions(int $limit = 5): array
+    {
+        $questions = QuestionAnswer::select(
+            'question_id',
+            DB::raw('SUM(practice_failed_attempts + mock_failed_attempts) AS missed')
+        )
+            ->groupBy('question_id')
+            ->orderByDesc('missed')
+            ->limit($limit)
+            ->with('question:id,question')
+            ->get();
+
+        return $questions->map(fn($item) => [
+            'question' => $item->question->question ?? 'Unknown Question',
+            'missed' => (int) $item->missed,
+        ])->toArray();
+    }
+
+    public function getContentEngagementChart(): array
+    {
+        // Static mapping OR pull from analytics table later
+        return [
+            'labels' => [
+                'Study Guides',
+                'Mock Exams',
+                'Flash Cards',
+                'Practice Questions'
+            ],
+            'data' => [
+                35,
+                15,
+                28,
+                22
+            ]
+        ];
     }
 }
