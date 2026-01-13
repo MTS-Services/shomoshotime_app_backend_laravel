@@ -134,7 +134,7 @@ class AnalyticsService
         return round(($totalCorrect / $totalQuestions) * 100, 2);
     }
 
-    public function getOverallMockProgress($userId): float
+    public function getUserOverallMockProgress($userId): float
     {
         $totalQuestionSets = QuestionSet::count();
 
