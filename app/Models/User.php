@@ -94,6 +94,10 @@ class User extends Authenticatable implements OAuthenticatable, MustVerifyEmail
     {
         return $this->belongsTo(User::class, 'updated_by', 'id');
     }
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(PusherNotification::class, 'user_id', 'id');
+    }
     /* ===================== ===================== ===================== =====================
                                     End of Relation's
     ===================== ===================== ===================== ===================== */
