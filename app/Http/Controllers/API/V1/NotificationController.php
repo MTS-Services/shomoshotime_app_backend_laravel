@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Events\UserNotificationEvent;
+use App\Events\GlobalNotificationEvent;
+use App\Jobs\SendGlobalNotificationJob;
 use App\Http\Controllers\Controller;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
@@ -20,18 +22,32 @@ class NotificationController extends Controller
     
     public function sendNotification(Request $request): JsonResponse
     {
-        $validation = $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
+        // 1. Validation: Make user_id 'nullable'
+        $data = $request->validate([
+            'user_id' => 'nullable|integer|exists:users,id',
             'title' => 'required|string',
             'message' => 'required|string',
         ]);        
-        $data = $validation;
-        $userId = $data['user_id'];
+        
         $title = $data['title'];
         $message = $data['message'];
-        $this->service->storeNotifications($userId,$data);
-        event(new UserNotificationEvent($userId, $title, $message));
 
-        return sendResponse(true, $title ,$message , Response::HTTP_OK);
+        
+        if (!empty($data['user_id'])) {
+            $userId = $data['user_id'];
+            
+            $this->service->storeNotifications($userId, $data);
+            
+            event(new UserNotificationEvent($userId, $title, $message));
+            
+        } else {
+            // 1. Fire Global Broadcast immediately (Fastest UI feedback)
+            event(new GlobalNotificationEvent($title, $message));
+
+            // 2. Dispatch Job to save to DB in background (Performance)
+            SendGlobalNotificationJob::dispatch($title, $message);
+        }
+
+        return sendResponse(true, $title, $message, Response::HTTP_OK);
     }
 }
