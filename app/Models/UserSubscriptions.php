@@ -2,18 +2,15 @@
 
 namespace App\Models;
 
-use App\Models\BaseModel;
-
 class UserSubscriptions extends BaseModel
 {
     protected $fillable = [
-        "sort_order",
-        "user_id",
-        "subscription_id",
-        "starts_at",
-        "ends_at",
-        "is_active",
-
+        'sort_order',
+        'user_id',
+        'subscription_id',
+        'starts_at',
+        'ends_at',
+        'is_active',
 
         'created_by',
         'updated_by',
@@ -22,14 +19,19 @@ class UserSubscriptions extends BaseModel
 
     //
 
-
-
     /* ===================== ===================== ===================== =====================
                                     Start of Relation's
     ===================== ===================== ===================== ===================== */
 
-    // Relations
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
 
+    public function subscription()
+    {
+        return $this->belongsTo(Subscription::class, 'subscription_id', 'id');
+    }
     /* ===================== ===================== ===================== =====================
                                     End of Relation's
     ===================== ===================== ===================== ===================== */

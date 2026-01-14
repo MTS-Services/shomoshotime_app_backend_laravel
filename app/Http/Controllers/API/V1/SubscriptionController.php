@@ -27,10 +27,6 @@ class SubscriptionController extends Controller
             if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
-
-            if (! $user->isAdmin()) {
-                return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
-            }
             $query = $this->service->getAllSubscriptions();
             $subscriptions = $query->paginate($request->input('per_page', 10));
 
