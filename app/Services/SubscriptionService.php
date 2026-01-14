@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Subscription;
+use App\Models\UserSubscriptions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ class SubscriptionService
         return Subscription::orderBy($orderBy, $order)->active()->latest();
 
     }
+
     public function getAllSubscriptions(string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         return Subscription::orderBy($orderBy, $order)->latest();
@@ -36,6 +38,21 @@ class SubscriptionService
             $data['created_by'] = Auth::id();
 
             return Subscription::create($data);
+        });
+    }
+
+    public function createUserSubscription(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+
+            $data['created_by'] = Auth::id();
+
+            UserSubscriptions::where('user_id', $data['user_id'])
+                ->update(['is_active' => false]);
+
+            $data['is_active'] = true;
+
+            return UserSubscriptions::create($data);
         });
     }
 

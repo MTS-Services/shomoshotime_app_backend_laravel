@@ -6,6 +6,7 @@ use App\Http\Controllers\API\V1\UserPanel\ContentController;
 use App\Http\Controllers\API\V1\UserPanel\ProfileController;
 use App\Http\Controllers\API\V1\UserPanel\QuestionController;
 use App\Http\Controllers\API\V1\UserPanel\SubscriptionController;
+use App\Http\Controllers\API\V1\UserSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(ContentController::class)->prefix('content')->group(function () {
@@ -52,4 +53,7 @@ Route::controller(ProfileController::class)->prefix('profile')->group(function (
 
 Route::controller(SubscriptionController::class)->prefix('subscription')->group(function () {
     Route::post('/list', 'getSubscriptions')->name('subscription.list');
+});
+Route::controller(UserSubscriptionController::class)->prefix('subscription')->group(function () {   
+    Route::post('/store', 'store')->name('subscription.list');
 });
