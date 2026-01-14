@@ -30,7 +30,14 @@ class Payment extends BaseModel
                                     Start of Relation's
     ===================== ===================== ===================== ===================== */
 
-    // Relations
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+    public function subscription()
+    {
+        return $this->belongsTo(Subscription::class, 'subscription_id', 'id');
+    }
 
     /* ===================== ===================== ===================== =====================
                                     End of Relation's
