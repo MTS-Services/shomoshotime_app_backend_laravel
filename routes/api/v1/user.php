@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\V1\NotificationController;
+use App\Http\Controllers\API\V1\PaymentController;
 use App\Http\Controllers\API\V1\UserPanel\AnalyticsController;
 use App\Http\Controllers\API\V1\UserPanel\ContentController;
 use App\Http\Controllers\API\V1\UserPanel\ProfileController;
@@ -56,4 +57,7 @@ Route::controller(SubscriptionController::class)->prefix('subscription')->group(
 });
 Route::controller(UserSubscriptionController::class)->prefix('subscription')->group(function () {   
     Route::post('/store', 'store')->name('subscription.list');
+});
+Route::controller(PaymentController::class)->prefix('payment')->group(function () {   
+    Route::post('/store', 'store')->name('payment.store');
 });
