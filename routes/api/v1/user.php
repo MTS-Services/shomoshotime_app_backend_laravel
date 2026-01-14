@@ -20,7 +20,7 @@ Route::controller(ContentController::class)->prefix('content')->group(function (
 // });
 
 Route::controller(AnalyticsController::class)->group(function () {
-    Route::post('/analytics', 'analytics')->name('user-analytics');
+    Route::post('/userAnalytics', 'userAnalytics')->name('user-analytics');
 });
 Route::controller(NotificationController::class)->group(function () {
     Route::post('/send-notification', 'sendNotification')->name('send-notification');

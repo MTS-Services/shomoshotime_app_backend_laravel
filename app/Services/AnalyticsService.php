@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
 {
-
     public function overallUserStudyGuideProgress(int $userId): array
     {
         // Total pages from all published study guides
@@ -72,7 +71,6 @@ class AnalyticsService
         ];
     }
 
-
     public function getUserOverallPracticeAccuracy($userId): float
     {
         $answers = QuestionAnswer::where('user_id', $userId)
@@ -113,7 +111,6 @@ class AnalyticsService
         return round(($answeredQuestions / $totalQuestions) * 100, 2);
     }
 
-
     public function getUserOverallMockAccuracy($userId): float
     {
         $attempts = MockTestAttempt::where('user_id', $userId)
@@ -150,6 +147,31 @@ class AnalyticsService
         return round(($usedAttempts / $maxAttempts) * 100, 2);
     }
 
+    // Admin Home page Total Users analytics methods
+    public function totalUsersCount(): int
+    {
+        return User::count();
+    }
+
+    // active users count
+    public function activeUsersCount(): int
+    {
+        return User::active()->count();
+    }
+
+    // today's users count
+    public function todayNewUsersCount(): int
+    {
+        return User::whereDate('created_at', Carbon::today())->count();
+    }
+
+    // Admin Home Page Total Contents analytics methods
+    public function totalContentsCount(): int
+    {
+        return Content::count();
+    }
+
+    // Admin Home page AverageExam analytics methods
     public function getAverageExamScore(): float
     {
         $average = MockTestAttempt::query()
@@ -159,7 +181,7 @@ class AnalyticsService
         return round($average ?? 0, 2);
     }
 
-
+    // Admin Home page UserGrowth analytics methods
     public function getUserGrowthChartData(): array
     {
         $users = User::select(
@@ -172,12 +194,13 @@ class AnalyticsService
 
         return [
             'labels' => $users->pluck('month')->map(
-                fn($m) => Carbon::createFromFormat('Y-m', $m)->format('M Y')
+                fn ($m) => Carbon::createFromFormat('Y-m', $m)->format('M Y')
             ),
             'data' => $users->pluck('total'),
         ];
     }
 
+    // Admin Home page SubscriptionDistribution analytics methods
     public function getSubscriptionDistributionChartData(): array
     {
         $subscriptions = DB::table('user_subscriptions')
@@ -197,7 +220,7 @@ class AnalyticsService
         ];
     }
 
-
+    // Admin Analytics page KPI Metrics analytics methods
     public function getKpiMetrics(): array
     {
         $avgScore = MockTestAttempt::where('status', 'completed')
@@ -233,28 +256,44 @@ class AnalyticsService
             ->with('question:id,question')
             ->get();
 
-        return $questions->map(fn($item) => [
+        return $questions->map(fn ($item) => [
             'question' => $item->question->question ?? 'Unknown Question',
             'missed' => (int) $item->missed,
         ])->toArray();
     }
 
-    public function getContentEngagementChart(): array
+    public function getContentEngagementChart(?int $userId = null): array
     {
-        // Static mapping OR pull from analytics table later
+        // If $userId is provided, use user-specific progress, else use total/completed counts
+        $studyGuidePercent = $userId
+            ? $this->overallUserStudyGuideProgress($userId)['progress_percent']
+            : 0;
+
+        $flashCardPercent = $userId
+            ? $this->overallUserFlashCardProgress($userId)['progress_percent']
+            : 0;
+
+        $practicePercent = $userId
+            ? $this->getUserOverallPracticeProgress($userId)
+            : 0;
+
+        $mockPercent = $userId
+            ? $this->getUserOverallMockProgress($userId)
+            : 0;
+
         return [
             'labels' => [
                 'Study Guides',
                 'Mock Exams',
                 'Flash Cards',
-                'Practice Questions'
+                'Practice Questions',
             ],
             'data' => [
-                35,
-                15,
-                28,
-                22
-            ]
+                $studyGuidePercent,
+                $mockPercent,
+                $flashCardPercent,
+                $practicePercent,
+            ],
         ];
     }
 }
