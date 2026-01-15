@@ -9,6 +9,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 class NotificationService
 {
+    public function getUserNotifications($userId)
+    {
+        return PusherNotification::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    public function markAsRead($notificationId, $isRead)
+    {
+        $notification = PusherNotification::where('id', $notificationId)->first();
+
+        if ($notification) {
+            $notification->is_read = $isRead;
+            $notification->save();
+        }
+
+        return $notification;
+    }
     public function storeNotifications($userId, $data)
     {
         $user = User::findOrFail($userId);

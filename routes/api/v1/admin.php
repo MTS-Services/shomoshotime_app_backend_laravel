@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\V1\ContentManagement\ContentController;
 use App\Http\Controllers\API\V1\ContentManagement\FlashCardController;
+use App\Http\Controllers\API\V1\NotificationController;
 use App\Http\Controllers\API\V1\QuestionManagement\QuestionController;
 use App\Http\Controllers\API\V1\QuestionManagement\QuestionSetController;
 use App\Http\Controllers\API\V1\SubscriptionController;
@@ -52,6 +53,10 @@ Route::prefix('question')->group(function () {
         Route::put('/update/{id}', 'update')->name('question-set.update');
         Route::delete('/delete/{id}', 'delete')->name('question-set.delete');
     });
+});
+
+Route::controller(NotificationController::class)->group(function () {
+    Route::post('/send-notification', 'sendNotification')->name('send-notification');
 });
 
 Route::controller(SubscriptionController::class)->prefix('subscription')->group(function () {
