@@ -39,7 +39,7 @@ class QuestionController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return sendResponse(false,$validator->errors()->first(),null,
+                return sendResponse(false, $validator->errors()->first(), null,
                     Response::HTTP_UNPROCESSABLE_ENTITY
                 );
             }
@@ -47,7 +47,7 @@ class QuestionController extends Controller
             $questions = $this->questionSetService->getQuestionSets($current_mode);
             $contents = $questions->paginate($request->input('per_page', 10));
 
-            return sendResponse(true,'Questions Set data fetched successfully.',QuestionSetResource::collection($contents), Response::HTTP_OK
+            return sendResponse(true, 'Questions Set data fetched successfully.', QuestionSetResource::collection($contents), Response::HTTP_OK
             );
         } catch (Throwable $e) {
             Log::error('Get Question Sets Error: '.$e->getMessage());
