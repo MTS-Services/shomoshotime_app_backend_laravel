@@ -6,7 +6,6 @@ use App\Events\GlobalNotificationEvent;
 use App\Events\UserNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendGlobalNotificationJob;
-use App\Models\PusherNotification;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +19,24 @@ class NotificationController extends Controller
     public function __construct(NotificationService $service)
     {
         $this->service = $service;
+    }
+
+    public function getAllNotifications(Request $request): JsonResponse
+    {
+
+        $authUser = $request->user();
+
+        if (! $authUser) {
+            return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+        }
+
+        if (! $authUser->isAdmin()) {
+            return sendResponse(false, 'Admin access required', null, Response::HTTP_FORBIDDEN);
+        }
+
+        $allNotifications = $this->service->getAllNotifications();
+
+        return sendResponse(true, 'All Notifications Fetched Successfully', $allNotifications, Response::HTTP_OK);
     }
 
     public function getNotifications(Request $request): JsonResponse

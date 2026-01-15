@@ -4,11 +4,16 @@ namespace App\Services;
 
 use App\Models\PusherNotification;
 use App\Models\User;
-
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 class NotificationService
 {
+    public function getAllNotifications()
+    {
+        return PusherNotification::orderBy('created_at', 'desc')->get();
+    }
+
     public function getUserNotifications($userId)
     {
         return PusherNotification::where('user_id', $userId)
@@ -27,12 +32,13 @@ class NotificationService
 
         return $notification;
     }
+
     public function storeNotifications($userId, $data)
     {
         $user = User::findOrFail($userId);
 
-        if (!$user) {
-            throw new \InvalidArgumentException("User not found");
+        if (! $user) {
+            throw new \InvalidArgumentException('User not found');
         }
 
         return DB::transaction(function () use ($data, $userId) {
@@ -41,7 +47,7 @@ class NotificationService
                 'title' => $data['title'],
                 'message' => $data['message'],
                 'is_read' => 0,
-                'created_by' => Auth::id()
+                'created_by' => Auth::id(),
             ]);
 
         });
