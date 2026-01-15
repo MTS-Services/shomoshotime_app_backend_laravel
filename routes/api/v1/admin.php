@@ -57,6 +57,7 @@ Route::prefix('question')->group(function () {
 
 Route::controller(NotificationController::class)->group(function () {
     Route::post('/send-notification', 'sendNotification')->name('send-notification');
+    Route::post('/all-notification', 'getAllNotifications')->name('all-notification');
 });
 
 Route::controller(SubscriptionController::class)->prefix('subscription')->group(function () {
