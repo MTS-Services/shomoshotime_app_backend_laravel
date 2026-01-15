@@ -19,7 +19,7 @@ Route::controller(ContentController::class)->prefix('content')->group(function (
 // });
 
 Route::controller(NotificationController::class)->group(function () {
-    Route::post('/send-notification', 'sendNotification')->name('send-notification');
+    // Route::post('/send-notification', 'sendNotification')->name('send-notification');
     Route::post('/user-notifications', 'getNotifications')->name('get-notifications');
     Route::post('/mark-notification-read', 'markAsRead')->name('mark-notification-read');
 });
