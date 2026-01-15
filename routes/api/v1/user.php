@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\V1\NotificationController;
+use App\Http\Controllers\API\V1\UserPanel\AnalyticsController;
 use App\Http\Controllers\API\V1\UserPanel\ContentController;
 use App\Http\Controllers\API\V1\UserPanel\ProfileController;
 use App\Http\Controllers\API\V1\UserPanel\QuestionController;
@@ -18,6 +19,9 @@ Route::controller(ContentController::class)->prefix('content')->group(function (
 //     Route::post('/sets', 'getQuestionSets')->name('question-sets');
 // });
 
+Route::controller(AnalyticsController::class)->group(function () {
+    Route::post('/userAnalytics', 'userAnalytics')->name('user-analytics');
+});
 Route::controller(NotificationController::class)->group(function () {
     // Route::post('/send-notification', 'sendNotification')->name('send-notification');
     Route::post('/user-notifications', 'getNotifications')->name('get-notifications');

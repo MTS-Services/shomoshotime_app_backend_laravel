@@ -7,6 +7,7 @@ use App\Http\Controllers\API\V1\QuestionManagement\QuestionController;
 use App\Http\Controllers\API\V1\QuestionManagement\QuestionSetController;
 use App\Http\Controllers\API\V1\SubscriptionController;
 use App\Http\Controllers\API\V1\UserController;
+use App\Http\Controllers\API\V1\UserPanel\AnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(UserController::class)->prefix('user')->group(function () {
@@ -16,6 +17,9 @@ Route::controller(UserController::class)->prefix('user')->group(function () {
     Route::post('/create', 'store')->name('create-user');
     Route::put('/update/{id}', 'update')->name('user.update');
     Route::delete('/delete/{id}', 'delete')->name('user.delete');
+});
+Route::controller(AnalyticsController::class)->group(function () {
+    Route::post('/adminAnalytics', 'adminAnalytics')->name('admin-analytics');
 });
 Route::prefix('content')->group(function () {
     // Content routes
