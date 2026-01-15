@@ -63,6 +63,10 @@ class QuestionSet extends BaseModel
     {
         return $this->hasMany(QuestionSetAnalytic::class);
     }
+    public function questionAnswers(): HasMany
+    {
+        return $this->hasMany(QuestionAnswer::class, 'question_set_id', 'id');
+    }
 
     public function mockTestAttempts(): HasMany
     {
