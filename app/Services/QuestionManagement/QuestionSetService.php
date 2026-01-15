@@ -92,7 +92,8 @@ class QuestionSetService
             ];
         });
     }
-        /**
+
+    /**
      * Start a new mock test
      */
     public function startMockTest(int $questionSetId): array
@@ -294,8 +295,6 @@ class QuestionSetService
         $mockAttempt->save();
     }
 
-
-
     /**
      * Get question set progress for a user
      */
@@ -449,16 +448,42 @@ class QuestionSetService
     /**
      * Get all question sets with user progress
      */
-    public function getQuestionSets(string $current_mode = 'practice', string $orderBy = 'created_at', string $order = 'desc'): Builder
-    {
-        return QuestionSet::withCount('questions')
-            ->with(['analytics' => function ($query) use ($current_mode) {
-                $query->where('user_id', Auth::id())->where('current_mode', $current_mode);
-            }])
-            ->whereHas('analytics', function ($query) use ($current_mode) {
-                $query->where('current_mode', $current_mode);
-            })
-            ->orderBy($orderBy, $order);
+    public function getQuestionSets(
+        string $current_mode = 'practice',
+        string $orderBy = 'created_at',
+        string $order = 'desc'
+    ): Builder {
+        $query = QuestionSet::withCount('questions');
+
+        // Always eager-load analytics for the current user & mode
+        $query->with(['analytics' => function ($q) use ($current_mode) {
+            $q->where('user_id', Auth::id())
+                ->where('current_mode', $current_mode);
+        }]);
+
+        if ($current_mode === 'practice') {
+            $query->where(function ($q) use ($current_mode) {
+                $q->whereHas('analytics', function ($q2) use ($current_mode) {
+                    $q2->where('user_id', Auth::id())
+                        ->where('current_mode', $current_mode)->where('practice_completed', false);
+                })
+                    ->orWhereDoesntHave('analytics', function ($q2) {
+                        $q2->where('user_id', Auth::id());
+                    });
+            });
+        }
+
+        if ($current_mode === 'mock_test') {
+            $query->whereHas('analytics', function ($q) use ($current_mode) {
+                $q->where('user_id', Auth::id())
+                    ->where('current_mode', $current_mode)->orWhere(function ($q2) {
+                        $q2->where('current_mode', 'practice')
+                            ->where('practice_completed', true);
+                    });
+            });
+        }
+
+        return $query->orderBy($orderBy, $order);
     }
 
     /**
