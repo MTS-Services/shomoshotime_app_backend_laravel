@@ -40,6 +40,11 @@ class QuestionSetResource extends JsonResource
                 return QuestionSetAnalyticResource::collection($this->analytics);
             }),
 
+            // User Progress Data (if analytics relationship is loaded)
+            'mockTestAttempts' => $this->whenLoaded('mockTestAttempts', function () {
+                return MockTestAttemptResource::collection($this->mockTestAttempts);
+            }),
+
             'created_at' => $this->created_at_formatted ?? $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at_formatted ?? $this->updated_at->format('Y-m-d H:i:s'),
             'creater_name' => $this->creater?->name ?? 'N/A',

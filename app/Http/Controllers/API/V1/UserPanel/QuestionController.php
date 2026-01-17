@@ -46,6 +46,7 @@ class QuestionController extends Controller
             $current_mode = $request->input('current_mode', 'practice');
             $questions = $this->questionSetService->getQuestionSets($current_mode);
             $contents = $questions->paginate($request->input('per_page', 10));
+            $contents->load('mockTestAttempts');
 
             return sendResponse(true, 'Questions Set data fetched successfully.', QuestionSetResource::collection($contents), Response::HTTP_OK
             );
