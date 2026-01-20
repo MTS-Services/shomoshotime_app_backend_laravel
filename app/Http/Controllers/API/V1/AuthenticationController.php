@@ -150,6 +150,7 @@ class AuthenticationController extends Controller
                 : "User logged in successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
 
             $data = [
+                'user_id' => $user->id,
                 'message' => $message,
                 'name' => $user->name,
                 'email' => $user->email,
