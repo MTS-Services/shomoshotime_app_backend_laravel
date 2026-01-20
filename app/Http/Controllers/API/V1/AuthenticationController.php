@@ -76,6 +76,7 @@ class AuthenticationController extends Controller
             $message = "User registered successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
 
             $data = [
+                'user_id' => $user->id,
                 'message' => $message,
                 'otp' => $user->otp,
                 'token' => $token,
