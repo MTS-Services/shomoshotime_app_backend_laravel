@@ -12,15 +12,19 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
+
 class ContentController extends Controller
 {
     protected ContentService $service;
-    
+
     public function __construct(ContentService $service)
     {
         $this->service = $service;
     }
- 
+
+
+
+
     public function getContents(Request $request)
     {
         try {
