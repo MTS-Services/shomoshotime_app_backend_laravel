@@ -18,9 +18,7 @@ Route::controller(ContentController::class)->prefix('content')->group(function (
     Route::post('/flash-cards/next-question', 'nextQuestion')->name('flash-cards.next-question');
 
 });
-Route::get('/audio/{filename}', [ContentController::class, 'stream'])
-    ->where('filename', '.*')
-    ->name('audio.stream');
+
 // Route::controller(QuestionController::class)->prefix('question')->group(function () {
 //     Route::post('/sets', 'getQuestionSets')->name('question-sets');
 // });
