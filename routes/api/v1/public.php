@@ -7,6 +7,7 @@ use App\Http\Controllers\API\V1\NotificationController;
 use App\Http\Controllers\API\V1\PropertyManagement\PropertyController;
 use App\Http\Controllers\API\V1\PropertyManagement\CategoryController;
 use App\Http\Controllers\API\V1\PropertyManagement\PropertyTypeController;
+use App\Http\Controllers\API\V1\UserPanel\ContentController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -15,3 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/send-notification', [NotificationController::class, 'sendNotification']);
 Route::post('/send-notification-multiple', [NotificationController::class, 'sendToMultiple']);
 Route::post('/send-notification-topic', [NotificationController::class, 'sendToTopic']);
+
+Route::get('/audio/{filename}', [ContentController::class, 'stream'])
+    ->where('filename', '.*')
+    ->name('user.audio.stream');
