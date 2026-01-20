@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ContentController extends Controller
 {
@@ -25,11 +28,82 @@ class ContentController extends Controller
         $this->flashCardService = $flashCardService;
     }
 
+
+    public function stream(Request $request, string $filename)
+    {
+        $path = $filename;
+
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404, 'Audio not found');
+        }
+
+        $fullPath = Storage::disk('public')->path($path);
+        $fileSize = filesize($fullPath);
+        $mimeType = 'audio/mp3';
+
+        $range = $request->header('Range');
+
+        // No range request - use BinaryFileResponse
+        if (!$range) {
+            $response = new BinaryFileResponse($fullPath);
+            $response->headers->set('Content-Type', $mimeType);
+            $response->headers->set('Accept-Ranges', 'bytes');
+            return $response;
+        }
+
+        // Parse range header
+        if (!preg_match('/bytes=(\d+)-(\d*)/', $range, $matches)) {
+            abort(416, 'Invalid range');
+        }
+
+        $start = intval($matches[1]);
+        $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+
+        // Ensure valid range
+        if ($start >= $fileSize || $start < 0 || $end >= $fileSize) {
+            abort(416, 'Range not satisfiable');
+        }
+
+        $end = min($end, $fileSize - 1);
+        $length = $end - $start + 1;
+
+        // Use StreamedResponse for range requests
+        $stream = new StreamedResponse(function () use ($fullPath, $start, $length) {
+            $file = fopen($fullPath, 'rb');
+            if ($file === false) {
+                return;
+            }
+
+            fseek($file, $start);
+
+            $remaining = $length;
+            while ($remaining > 0 && !feof($file)) {
+                $chunkSize = min(8192, $remaining);
+                $data = fread($file, $chunkSize);
+                if ($data === false) {
+                    break;
+                }
+                echo $data;
+                $remaining -= strlen($data);
+                flush();
+            }
+
+            fclose($file);
+        }, 206);
+
+        $stream->headers->set('Content-Type', $mimeType);
+        $stream->headers->set('Content-Length', $length);
+        $stream->headers->set('Content-Range', "bytes {$start}-{$end}/{$fileSize}");
+        $stream->headers->set('Accept-Ranges', 'bytes');
+
+        return $stream;
+    }
+
     public function nextPage(Request $request)
     {
         try {
             $user = request()->user();
-            if (! $user) {
+            if (!$user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $validator = Validator::make($request->all(), [
@@ -43,7 +117,7 @@ class ContentController extends Controller
             $contentId = $data['content_id'];
             $pageNumber = $data['page_number'];
             $content = $this->service->findContent($contentId);
-            if (! $content) {
+            if (!$content) {
                 return sendResponse(false, 'Content not found', null, Response::HTTP_NOT_FOUND);
             }
 
@@ -51,9 +125,9 @@ class ContentController extends Controller
 
             return sendResponse(true, 'Next page data stored successfully.', $nextPageNumber, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Next Page Error: '.$e->getMessage());
+            Log::error('Get Next Page Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -61,7 +135,7 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (! $user) {
+            if (!$user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $file_type = $request->input('file_type');
@@ -80,9 +154,9 @@ class ContentController extends Controller
 
             return sendResponse(true, 'Study guides data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Todos Error: '.$e->getMessage());
+            Log::error('Get Todos Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -90,13 +164,13 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (! $user) {
+            if (!$user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
 
             $category = $request->input('category');
             $query = $this->flashCardService->getFlashCards($category);
-            $query->withCount(['flashCardActivities','flashCards']);
+            $query->withCount(['flashCardActivities', 'flashCards']);
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('title', $searchQuery)
@@ -110,9 +184,9 @@ class ContentController extends Controller
 
             return sendResponse(true, ' Flash cards data fetched successfully.', ContentResource::collection($flashCards), Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Todos Error: '.$e->getMessage());
+            Log::error('Get Todos Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -120,7 +194,7 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (! $user) {
+            if (!$user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $validator = Validator::make($request->all(), [
@@ -134,16 +208,16 @@ class ContentController extends Controller
             $contentId = $data['content_id'];
             $cardId = $data['card_id'];
             $flashCard = $this->flashCardService->findFlashCard($contentId, $cardId);
-            if (! $flashCard) {
-                return sendResponse(false,  'This flash card does not belong to the given content.', null, Response::HTTP_NOT_FOUND);
+            if (!$flashCard) {
+                return sendResponse(false, 'This flash card does not belong to the given content.', null, Response::HTTP_NOT_FOUND);
             }
             $this->flashCardService->storeNextQuestionData($user->id, $contentId, $cardId);
 
             return sendResponse(true, 'Next question data stored successfully.', null, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Next Question Error: '.$e->getMessage());
+            Log::error('Get Next Question Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -151,11 +225,11 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (! $user) {
+            if (!$user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $contentId = $request->input('content_id');
-            if (! $contentId) {
+            if (!$contentId) {
                 return sendResponse(false, 'content_id is required', null, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
@@ -164,9 +238,9 @@ class ContentController extends Controller
 
             return sendResponse(true, ' Flash card sets data fetched successfully.', FlashCardResource::collection($contents), Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Todos Error: '.$e->getMessage());
+            Log::error('Get Todos Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

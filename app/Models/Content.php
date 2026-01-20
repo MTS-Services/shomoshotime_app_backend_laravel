@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Content extends BaseModel
 {
@@ -13,9 +14,9 @@ class Content extends BaseModel
     |--------------------------------------------------------------------------
     */
     public const NOT_PUBLISH = 0;
-    public const IS_PUBLISH  = 1;
+    public const IS_PUBLISH = 1;
     public const TYPE_STUDY_GUIDE = 0;
-    public const TYPE_FLASHCARD  = 1;
+    public const TYPE_FLASHCARD = 1;
 
     /*
     |--------------------------------------------------------------------------
@@ -42,9 +43,19 @@ class Content extends BaseModel
     |--------------------------------------------------------------------------
     */
     protected $casts = [
-        'type'     => 'integer',
+        'type' => 'integer',
         'is_publish' => 'boolean',
     ];
+
+
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->appends = array_merge(parent::getAppends(), [
+            'file_url',
+        ]);
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -55,14 +66,14 @@ class Content extends BaseModel
     {
         return [
             self::TYPE_STUDY_GUIDE => 'Study Guide',
-            self::TYPE_FLASHCARD  => 'Flashcard',
+            self::TYPE_FLASHCARD => 'Flashcard',
         ];
     }
     public static function getPublishList(): array
     {
         return [
             self::NOT_PUBLISH => 'Not Publish',
-            self::IS_PUBLISH  => 'Publish',
+            self::IS_PUBLISH => 'Publish',
         ];
     }
 
@@ -75,12 +86,24 @@ class Content extends BaseModel
     {
         return match ($this->type) {
             self::TYPE_STUDY_GUIDE => 'badge-info',
-            self::TYPE_FLASHCARD  => 'badge-primary',
+            self::TYPE_FLASHCARD => 'badge-primary',
             default => 'badge-default',
         };
     }
 
-   
+    public function getFileUrlAttribute(): string
+    {
+        if ($this->file_type == 'audio') {
+            if (filter_var($this->file, FILTER_VALIDATE_URL)) {
+                return $this->file;
+            }
+            return route('api.v1.user.audio.stream', ['filename' => $this->file]);
+        } else {
+            return Storage::disk('public')->url($this->file);
+        }
+    }
+
+
     /* ===================== ===================== ===================== =====================
                                     Start of Relation's
     ===================== ===================== ===================== ===================== */
@@ -88,7 +111,7 @@ class Content extends BaseModel
     {
         return $this->hasMany(FlashCard::class, 'content_id', 'id');
     }
-   
+
     public function chapters(): HasMany
     {
         return $this->hasMany(Chapter::class, 'content_id', 'id');
@@ -103,7 +126,7 @@ class Content extends BaseModel
     {
         return $this->hasMany(FlashCardActivity::class, 'content_id', 'id');
     }
-   
+
     /* ===================== ===================== ===================== =====================
                                     End of Relation's
     ===================== ===================== ===================== ===================== */
