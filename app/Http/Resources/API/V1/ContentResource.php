@@ -23,6 +23,7 @@ class ContentResource extends JsonResource
             'category' => $this->category,
             'file' => storage_url($this->file),
             'file_type' => $this->file_type,
+            'file_url' => $this->file_url,
             'type' => $this->type,
             'type_label' => Content::getTypeList()[$this->type] ?? 'N/A',
             'is_publish' => $this->is_publish,
