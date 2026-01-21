@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\PaymentResource;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -19,7 +18,6 @@ class PaymentController extends Controller
         $this->service = $service;
     }
 
-    
     public function store(Request $request)
     {
         try {
@@ -28,15 +26,19 @@ class PaymentController extends Controller
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
 
-            $data = $request->all();
-            $payment = $this->service->createPayment($data);
-            $payment->load(['user', 'subscription']);
+            $request->validate([
+                'subscription_id' => 'required|exists:subscriptions,id',
+                'amount' => 'required|numeric|min:0',
+                'payment_intent_data' => 'nullable',
+            ]);
+            $result = $this->service->createPaymentWithSubscription($request->all(), $user->id); // service call
+            
+            return sendResponse(true, 'Payment and subscription created successfully.', ['payment' => new PaymentResource($result['payment']),], Response::HTTP_CREATED);
 
-            return sendResponse(true, 'Payment created successfully.', new PaymentResource($payment), Response::HTTP_CREATED);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return sendResponse(false, 'Validation failed', $e->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (Throwable $e) {
-            Log::error('Create Payment Error: '.$e->getMessage());
-
-            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong while processing payment.', null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
