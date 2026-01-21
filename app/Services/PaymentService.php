@@ -26,6 +26,14 @@ class PaymentService
         return DB::transaction(function () use ($data, $userId) {
 
             // Create payment
+            $paymentIntentPayload = $data['payment_intent_data'] ?? null;
+            if (is_string($paymentIntentPayload)) {
+                $decodedPayload = json_decode($paymentIntentPayload, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $paymentIntentPayload = $decodedPayload;
+                }
+            }
+
             $paymentData = [
                 'user_id' => $userId,
                 'subscription_id' => $data['subscription_id'],
@@ -34,7 +42,7 @@ class PaymentService
                 'payment_method' => $data['payment_method'] ?? null,
                 'transaction_id' => $data['transaction_id'] ?? null,
                 'status' => $data['status'] ?? 1,
-                'payment_intent_data' => $data['payment_intent_data'] ?? null,
+                'payment_intent_data' => $paymentIntentPayload,
                 'created_by' => $userId,
             ];
 

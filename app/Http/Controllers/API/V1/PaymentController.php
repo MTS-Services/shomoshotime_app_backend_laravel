@@ -29,11 +29,10 @@ class PaymentController extends Controller
             $request->validate([
                 'subscription_id' => 'required|exists:subscriptions,id',
                 'amount' => 'required|numeric|min:0',
-                'payment_intent_data' => 'nullable|array',
+                'payment_intent_data' => 'nullable',
             ]);
-
             $result = $this->service->createPaymentWithSubscription($request->all(), $user->id); // service call
-
+            
             return sendResponse(true, 'Payment and subscription created successfully.', ['payment' => new PaymentResource($result['payment']),], Response::HTTP_CREATED);
 
         } catch (\Illuminate\Validation\ValidationException $e) {

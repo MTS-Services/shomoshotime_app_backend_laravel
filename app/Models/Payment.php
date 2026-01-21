@@ -23,6 +23,10 @@ class Payment extends BaseModel
         'deleted_by',
     ];
 
+    protected $casts = [
+        'payment_intent_data' => 'array',
+    ];
+
     //
 
 
