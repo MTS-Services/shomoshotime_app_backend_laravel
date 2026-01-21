@@ -7,7 +7,9 @@ class UserSubscriptions extends BaseModel
     protected $fillable = [
         'sort_order',
         'user_id',
+        'payment_id',
         'subscription_id',
+
         'starts_at',
         'ends_at',
         'is_active',
@@ -31,6 +33,10 @@ class UserSubscriptions extends BaseModel
     public function subscription()
     {
         return $this->belongsTo(Subscription::class, 'subscription_id', 'id');
+    }
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class, 'payment_id', 'id');
     }
     /* ===================== ===================== ===================== =====================
                                     End of Relation's
