@@ -12,6 +12,7 @@ class Payment extends BaseModel
         "subscription_id",
         "amount",
         "currency",
+        "payment_intent_data",
         "payment_method",
         "transaction_id",
         "status",
