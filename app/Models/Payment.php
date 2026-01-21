@@ -12,6 +12,7 @@ class Payment extends BaseModel
         "subscription_id",
         "amount",
         "currency",
+        "payment_intent_data",
         "payment_method",
         "transaction_id",
         "status",
@@ -20,6 +21,10 @@ class Payment extends BaseModel
         'created_by',
         'updated_by',
         'deleted_by',
+    ];
+
+    protected $casts = [
+        'payment_intent_data' => 'array',
     ];
 
     //
@@ -37,6 +42,10 @@ class Payment extends BaseModel
     public function subscription()
     {
         return $this->belongsTo(Subscription::class, 'subscription_id', 'id');
+    }
+    public function userSubscriptions()
+    {
+        return $this->hasMany(UserSubscriptions::class, 'payment_id', 'id');
     }
 
     /* ===================== ===================== ===================== =====================

@@ -20,6 +20,7 @@ class PaymentResource extends JsonResource
             'subscription_id' => $this->subscription_id,
             'amount' => $this->amount,
             'currency' => $this->currency,
+            'payment_intent_data' => $this->payment_intent_data,
             'payment_method' => $this->payment_method,
             'transaction_id' => $this->transaction_id,
             'status' => $this->status,
@@ -32,8 +33,8 @@ class PaymentResource extends JsonResource
                 return new UserResource($this->user);
             }),
 
-            'subscription' => $this->whenLoaded('subscription', function () {
-                return new SubscriptionResource($this->subscription);
+            'userSubscriptions' => $this->whenLoaded('userSubscriptions', function () {
+                return UserSubscriptionResource::collection($this->userSubscriptions);
             }),
         ];
     }

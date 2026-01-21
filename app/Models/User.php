@@ -26,6 +26,7 @@ class User extends Authenticatable implements OAuthenticatable, MustVerifyEmail
         'image',
         'email_verified_at',
         'last_login_at',
+        'is_premium',
         'otp',
         'otp_sent_at',
         'otp_expires_at',

@@ -21,6 +21,7 @@ return new class extends Migration {
 
             $table->integer('amount');
             $table->string('currency')->default('USD');
+            $table->json('payment_intent_data')->nullable();
             $table->string('payment_method')->nullable();
             $table->string('transaction_id')->nullable();
             $table->string('status')->comment('success, failed, pending');
