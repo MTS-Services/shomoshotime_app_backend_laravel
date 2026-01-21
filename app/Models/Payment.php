@@ -39,6 +39,10 @@ class Payment extends BaseModel
     {
         return $this->belongsTo(Subscription::class, 'subscription_id', 'id');
     }
+    public function userSubscriptions()
+    {
+        return $this->hasMany(UserSubscriptions::class, 'payment_id', 'id');
+    }
 
     /* ===================== ===================== ===================== =====================
                                     End of Relation's

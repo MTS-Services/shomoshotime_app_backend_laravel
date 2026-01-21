@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('sort_order')->default(0);
 
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('payment_id');
             $table->unsignedBigInteger('subscription_id');
 
             $table->date('starts_at');
@@ -27,6 +28,7 @@ return new class extends Migration {
             $table->softDeletes();
 
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreign('payment_id')->references('id')->on('payments')->cascadeOnDelete()->cascadeOnUpdate();
             $table->foreign('subscription_id')->references('id')->on('subscriptions')->cascadeOnDelete()->cascadeOnUpdate();
             $this->addAuditColumns($table);
         });

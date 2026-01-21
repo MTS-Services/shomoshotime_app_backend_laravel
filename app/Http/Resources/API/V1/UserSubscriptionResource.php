@@ -17,6 +17,7 @@ class UserSubscriptionResource extends JsonResource
         return [
             'id'              => $this->id,
             'user_id'         => $this->user_id,
+            'payment_id'    => $this->payment_id,
             'subscription_id' => $this->subscription_id,
 
             'starts_at'       => $this->starts_at,
@@ -24,7 +25,7 @@ class UserSubscriptionResource extends JsonResource
 
             'is_active'       => (bool) $this->is_active,
 
-             'created_at' => $this->created_at_formatted,
+            'created_at' => $this->created_at_formatted,
             'updated_at' => $this->updated_at_formatted,
             'creater_name' => $this->creater?->name ?? 'N/A',
             'updater_name' => $this->updater?->name ?? 'N/A',
