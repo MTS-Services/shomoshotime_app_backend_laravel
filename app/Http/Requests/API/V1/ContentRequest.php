@@ -29,7 +29,7 @@ class ContentRequest extends BaseRequest
             'category' => 'sometimes|required|string|max:255',
             'type' => 'sometimes|required|integer|in:0,1',
             'is_publish' => 'sometimes|required|boolean',   
-            'file' =>'sometimes|required|file|mimes:mp3,pdf|max:10240',      
+            'file' =>'sometimes|required|file|mimes:mp3,pdf',      
         ];
     }
 
