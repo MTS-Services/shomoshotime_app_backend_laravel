@@ -96,6 +96,81 @@ class AuthenticationController extends Controller
         }
     }
 
+    public function googleLogin(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'google_id' => 'required|string',
+                'email' => 'required|email',
+                'name' => 'required|string',
+                'avatar' => 'nullable|string',
+                'fcm_token' => 'nullable|string',
+            ]);
+
+            DB::beginTransaction();
+            $user = User::where('google_id', $request->google_id)
+                ->orWhere('email', $request->email)
+                ->first();
+
+            if (!$user) {
+                $user = User::create([
+                    'username' => Str::slug($request->name) . rand(1000, 9999),
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'google_id' => $request->google_id,
+                    'password' => Hash::make(Str::random(32)), // dummy
+                    'email_verified_at' => now(),
+                    'status' => User::STATUS_ACTIVE,
+                ]);
+            }
+            if ($user->status === User::STATUS_SUSPENDED) {
+                throw ValidationException::withMessages([
+                    'email' => ['Your account has been suspended.'],
+                ]);
+            }
+            if (!$user->google_id) {
+                $user->update([
+                    'google_id' => $request->google_id,
+                ]);
+            }
+
+            $user->update([
+                'last_login_at' => now(),
+                'last_login_ip' => $request->ip(),
+                'avatar' => $user->avatar ?? $request->avatar,
+            ]);
+            UserDevice::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'device_token' => Str::uuid()->toString(),
+                    'user_agent' => $request->header('User-Agent'),
+                    'ip_address' => $request->ip(),
+                    'last_login_at' => now(),
+                ]
+            );
+
+            $tokenResult = $user->createToken('API Token');
+            $token = $tokenResult->accessToken;
+            $tokenModel = $tokenResult->token;
+
+            DB::commit();
+
+            return sendResponse(true, 'Google login successful', [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'token' => $token,
+                'token_type' => 'Bearer',
+                'expires_at' => $tokenModel->expires_at->toDateTimeString(),
+            ], Response::HTTP_OK);
+
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error($e);
+            return sendResponse(false, $e->getMessage(), null, 500);
+        }
+    }
+
     /**
      * Handle user login and manage device information.
      */
