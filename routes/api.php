@@ -10,6 +10,7 @@ Broadcast::routes(['middleware' => ['auth:api']]);
 Route::controller(AuthenticationController::class)->name('v1.auth.')->prefix('v1/auth')->group(function () {
     Route::post('/register', 'register')->name('register');
     Route::post('/login', 'login')->name('login');
+    Route::post('/google-login', 'googleLogin')->name('googleLogin');
 
     Route::post('/forgot-password', 'forgotPassword')->name('forgot-password');
     Route::post('/reset-password', 'ResetPassword')->name('reset-password');
