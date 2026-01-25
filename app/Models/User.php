@@ -43,6 +43,8 @@ class User extends Authenticatable implements OAuthenticatable, MustVerifyEmail
         'otp',
         'otp_sent_at',
         'otp_expires_at',
+        'is_admin',
+        'is_premium',
     ];
 
     protected $casts = [

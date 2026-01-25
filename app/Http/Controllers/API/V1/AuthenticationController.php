@@ -103,7 +103,7 @@ class AuthenticationController extends Controller
                 'google_id' => 'required|string',
                 'email' => 'required|email',
                 'name' => 'required|string',
-                'avatar' => 'nullable|string',
+                'image' => 'nullable|string',
                 'fcm_token' => 'nullable|string',
             ]);
 
@@ -117,6 +117,7 @@ class AuthenticationController extends Controller
                     'username' => Str::slug($request->name) . rand(1000, 9999),
                     'name' => $request->name,
                     'email' => $request->email,
+                    'image' => $request->image,
                     'google_id' => $request->google_id,
                     'password' => Hash::make(Str::random(32)), // dummy
                     'email_verified_at' => now(),
@@ -159,6 +160,9 @@ class AuthenticationController extends Controller
                 'user_id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'image' => $user->modified_image,                
+                'is_premium' => $user->is_premium,
+                'is_admin' => $user->is_admin,
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_at' => $tokenModel->expires_at->toDateTimeString(),
@@ -229,6 +233,9 @@ class AuthenticationController extends Controller
                 'message' => $message,
                 'name' => $user->name,
                 'email' => $user->email,
+                'image' => $user->modified_image,
+                'is_premium' => $user->is_premium,
+                'is_admin' => $user->is_admin,
                 'otp' => $verified ? "Verified" : $user->otp,
                 'token' => $token,
                 'token_type' => 'Bearer',
