@@ -7,8 +7,8 @@ use App\Http\Resources\API\V1\UserResource;
 use App\Services\UserManagement\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class ProfileController extends Controller
@@ -52,7 +52,7 @@ class ProfileController extends Controller
             ]);
 
             if ($validator->fails()) {
-                 return sendResponse(false,$validator->errors()->first(),null, Response::HTTP_UNPROCESSABLE_ENTITY
+                return sendResponse(false, $validator->errors()->first(), null, Response::HTTP_UNPROCESSABLE_ENTITY
                 );
             }
             $data = $validator->validated();
@@ -66,6 +66,20 @@ class ProfileController extends Controller
             Log::error('Get Todos Error: '.$e->getMessage());
 
             return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function subscriptionCheck(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+        }
+        if ($user->is_premium) {
+            return sendResponse(true, 'User has an active premium subscription.', ['is_premium' => true], Response::HTTP_OK);
+        } else {
+            return sendResponse(true, 'User does not have an active premium subscription.', ['is_premium' => false], Response::HTTP_OK);
         }
     }
 }
