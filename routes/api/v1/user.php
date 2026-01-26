@@ -55,6 +55,9 @@ Route::controller(ProfileController::class)->prefix('profile')->group(function (
     Route::post('/', 'getProfile')->name('profile');
     Route::post('/update', 'updateProfile')->name('update.profile');
 });
+Route::controller(ProfileController::class)->group(function () {
+    Route::post('/subscription-check', 'subscriptionCheck')->name('subscription-check');
+});
 
 Route::controller(SubscriptionController::class)->prefix('subscription')->group(function () {
     Route::post('/list', 'getSubscriptions')->name('subscription.list');
