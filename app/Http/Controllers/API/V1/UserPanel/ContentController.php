@@ -48,6 +48,7 @@ class ContentController extends Controller
             $response = new BinaryFileResponse($fullPath);
             $response->headers->set('Content-Type', $mimeType);
             $response->headers->set('Accept-Ranges', 'bytes');
+            $response->headers->set('Cache-Control', 'public, max-age=31536000');
             return $response;
         }
 
@@ -95,6 +96,7 @@ class ContentController extends Controller
         $stream->headers->set('Content-Length', $length);
         $stream->headers->set('Content-Range', "bytes {$start}-{$end}/{$fileSize}");
         $stream->headers->set('Accept-Ranges', 'bytes');
+        $stream->headers->set('Cache-Control', 'public, max-age=31536000');
 
         return $stream;
     }
