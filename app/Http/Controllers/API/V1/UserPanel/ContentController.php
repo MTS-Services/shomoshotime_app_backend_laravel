@@ -39,7 +39,7 @@ class ContentController extends Controller
 
         $fullPath = Storage::disk('public')->path($path);
         $fileSize = filesize($fullPath);
-        $mimeType = 'audio/mp3';
+        $mimeType = 'audio/mpeg';
 
         $range = $request->header('Range');
 
