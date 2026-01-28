@@ -48,7 +48,11 @@ class ContentController extends Controller
             $response = new BinaryFileResponse($fullPath);
             $response->headers->set('Content-Type', $mimeType);
             $response->headers->set('Accept-Ranges', 'bytes');
+            $response->headers->set('Content-Range', 'bytes 0-1023/5599488');
+            $response->headers->set('Content-Length', $fileSize);
             $response->headers->set('Cache-Control', 'public, max-age=31536000');
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
             return $response;
         }
 
