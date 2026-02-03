@@ -174,7 +174,7 @@ function auth_storage_url($url, $gender = false)
         $image = asset('default_img/female.jpg');
     }
 
-    return $url ? asset('storage/'.$url) : $image;
+    return $url ? (Str::startsWith($url, 'https://') ? $url : asset('storage/'.$url)) : $image;
 }
 
 function getSubmitterType($className)
