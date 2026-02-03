@@ -138,7 +138,7 @@ class AuthenticationController extends Controller
             $user->update([
                 'last_login_at' => now(),
                 'last_login_ip' => $request->ip(),
-                'image' => $user->avatar ?? $request->avatar,
+                'image' => $request->image,
             ]);
             UserDevice::updateOrCreate(
                 ['user_id' => $user->id],
