@@ -59,8 +59,9 @@ Route::controller(ProfileController::class)->group(function () {
     Route::post('/subscription-check', 'subscriptionCheck')->name('subscription-check');
 });
 
-Route::controller(SubscriptionController::class)->prefix('subscription')->group(function () {
-    Route::post('/list', 'getSubscriptions')->name('subscription.list');
+Route::controller(SubscriptionController::class)->group(function () {
+    Route::post('subscription/list', 'getSubscriptions')->name('subscription.list');
+    Route::post('/stripe-keys', 'stripeKey')->name('stripe.keys');
 });
 Route::controller(UserSubscriptionController::class)->prefix('subscription')->group(function () {
     Route::post('/store', 'store')->name('subscription.list');
