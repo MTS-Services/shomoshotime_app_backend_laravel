@@ -4,14 +4,12 @@ namespace App\Http\Controllers\API\V1\ContentManagement;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V1\ContentRequest;
-
 use App\Http\Resources\API\V1\ContentResource;
 use App\Services\ContentManagement\ContentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
-
 
 class ContentController extends Controller
 {
@@ -21,9 +19,6 @@ class ContentController extends Controller
     {
         $this->service = $service;
     }
-
-
-
 
     public function getContents(Request $request)
     {
