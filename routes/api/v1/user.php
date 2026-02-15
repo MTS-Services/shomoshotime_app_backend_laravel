@@ -54,6 +54,7 @@ Route::controller(QuestionController::class)->prefix('question')->group(function
 Route::controller(ProfileController::class)->prefix('profile')->group(function () {
     Route::post('/', 'getProfile')->name('profile');
     Route::post('/update', 'updateProfile')->name('update.profile');
+    Route::post('/delete', 'deleteAccount')->name('delete.profile');
 });
 Route::controller(ProfileController::class)->group(function () {
     Route::post('/subscription-check', 'subscriptionCheck')->name('subscription-check');

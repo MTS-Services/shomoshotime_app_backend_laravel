@@ -82,4 +82,31 @@ class ProfileController extends Controller
             return sendResponse(true, 'User does not have an active premium subscription.', ['is_premium' => false], Response::HTTP_OK);
         }
     }
+
+    public function deleteAccount(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (method_exists($user, 'tokens')) {
+                $user->tokens()->delete();
+            }
+
+            if (method_exists($user, 'userDevices')) {
+                $user->userDevices()->delete();
+            }
+
+            $this->service->deleteUser($user);
+
+            return sendResponse(true, 'Account deleted successfully. Please login again if needed.', null, Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Delete Account Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
