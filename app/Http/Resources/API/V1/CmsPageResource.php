@@ -18,7 +18,6 @@ class CmsPageResource extends JsonResource
             'id' => $this->id,
             'sort_order' => $this->sort_order,
             'type' => $this->type,
-            'type_label' => $this->type_label,
             'content' => $this->content,
             'is_active' => (bool) $this->is_active,
             'created_at' => $this->created_at,
