@@ -6,8 +6,10 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    use SoftDeletes, AuditColumnsTrait;
+return new class extends Migration
+{
+    use AuditColumnsTrait, SoftDeletes;
+
     /**
      * Run the migrations.
      */
@@ -24,6 +26,7 @@ return new class extends Migration {
             $table->date('starts_at');
             $table->date('ends_at')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_cancel')->default(false);
             $table->timestamps();
             $table->softDeletes();
 

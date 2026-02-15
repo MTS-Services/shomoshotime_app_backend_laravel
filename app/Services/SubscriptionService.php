@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Subscription;
+use App\Models\User;
 use App\Models\UserSubscriptions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -51,8 +52,33 @@ class SubscriptionService
                 ->update(['is_active' => false]);
 
             $data['is_active'] = true;
+            $data['is_cancel'] = false;
 
             return UserSubscriptions::create($data);
+        });
+    }
+
+    public function cancelUserSubscription(int $userId): ?UserSubscriptions
+    {
+        return DB::transaction(function () use ($userId) {
+            $subscription = UserSubscriptions::where('user_id', $userId)
+                ->where('is_active', true)
+                ->first();
+
+            if (! $subscription) {
+                return null;
+            }
+
+            $subscription->update([
+                'is_active' => false,
+                'is_cancel' => true,
+                'ends_at' => $subscription->ends_at ?? now(),
+                'updated_by' => Auth::id(),
+            ]);
+
+            User::whereKey($userId)->update(['is_premium' => false]);
+
+            return $subscription->fresh(['user', 'subscription']);
         });
     }
 

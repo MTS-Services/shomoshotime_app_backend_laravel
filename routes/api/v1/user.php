@@ -65,6 +65,7 @@ Route::controller(SubscriptionController::class)->group(function () {
 });
 Route::controller(UserSubscriptionController::class)->prefix('subscription')->group(function () {
     Route::post('/store', 'store')->name('subscription.list');
+    Route::post('/cancel', 'cancel')->name('subscription.cancel');
 });
 Route::controller(PaymentController::class)->prefix('payment')->group(function () {
     Route::post('/store', 'store')->name('payment.store');

@@ -6,20 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V1\UserSubscriptionRequest;
 use App\Http\Resources\API\V1\UserSubscriptionResource;
 use App\Services\SubscriptionService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class UserSubscriptionController extends Controller
 {
-       protected SubscriptionService $service;
+    protected SubscriptionService $service;
 
     public function __construct(SubscriptionService $service)
     {
         $this->service = $service;
     }
-
-    
 
     public function store(UserSubscriptionRequest $request)
     {
@@ -36,6 +35,28 @@ class UserSubscriptionController extends Controller
             return sendResponse(true, 'User Subscription created successfully.', new UserSubscriptionResource($subscription), Response::HTTP_CREATED);
         } catch (Throwable $e) {
             Log::error('Create User Subscription Error: '.$e->getMessage());
+
+            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function cancel(Request $request)
+    {
+        try {
+            $user = $request->user();
+            if (! $user) {
+                return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $subscription = $this->service->cancelUserSubscription($user->id);
+
+            if (! $subscription) {
+                return sendResponse(false, 'No active subscription found to cancel.', null, Response::HTTP_NOT_FOUND);
+            }
+
+            return sendResponse(true, 'Subscription cancelled successfully.', new UserSubscriptionResource($subscription), Response::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Cancel User Subscription Error: '.$e->getMessage());
 
             return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
