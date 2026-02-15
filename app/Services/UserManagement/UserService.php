@@ -110,7 +110,7 @@ class UserService
         if ($user->image) {
             $this->fileDelete($user->image);
         }
-        $user->delete();
+        $user->forceDelete();
     }
 
     
