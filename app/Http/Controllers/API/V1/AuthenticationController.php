@@ -5,32 +5,34 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V1\Auth\LoginRequest;
 use App\Http\Requests\API\V1\Auth\OTPRequest;
-use App\Http\Requests\API\V1\Auth\RegistrationRequest;
 use App\Http\Requests\API\V1\Auth\PasswordRequest;
+use App\Http\Requests\API\V1\Auth\RegistrationRequest;
 use App\Mail\OtpMail;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\UserDevice;
+use App\Models\UserSubscriptions;
 use App\Services\AuthenticationService;
-use App\Services\FirebaseNotificationService;
 use App\Services\EmailTokenService;
-use App\Services\SMS\DezSmsService;
+use App\Services\FirebaseNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
-use Illuminate\Support\Str;
 
 class AuthenticationController extends Controller
 {
     protected AuthenticationService $authService;
+
     protected EmailTokenService $emailTokenService;
+
     protected FirebaseNotificationService $firebaseNotificationService;
 
     public function __construct(AuthenticationService $authService, EmailTokenService $emailTokenService, FirebaseNotificationService $firebaseNotificationService)
@@ -72,8 +74,7 @@ class AuthenticationController extends Controller
 
             Mail::to($user->email)->send(new OtpMail($user, $user->otp));
 
-
-            $message = "User registered successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
+            $message = 'User registered successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***'.substr($user->email, -2).'.';
 
             $data = [
                 'user_id' => $user->id,
@@ -92,6 +93,7 @@ class AuthenticationController extends Controller
             return sendResponse(true, __('registration.success'), $data, Response::HTTP_CREATED);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -112,9 +114,9 @@ class AuthenticationController extends Controller
                 ->orWhere('email', $request->email)
                 ->first();
 
-            if (!$user) {
+            if (! $user) {
                 $user = User::create([
-                    'username' => Str::slug($request->name) . rand(1000, 9999),
+                    'username' => Str::slug($request->name).rand(1000, 9999),
                     'name' => $request->name,
                     'email' => $request->email,
                     'image' => $request->image,
@@ -129,7 +131,7 @@ class AuthenticationController extends Controller
                     'email' => ['Your account has been suspended.'],
                 ]);
             }
-            if (!$user->google_id) {
+            if (! $user->google_id) {
                 $user->update([
                     'google_id' => $request->google_id,
                 ]);
@@ -156,13 +158,16 @@ class AuthenticationController extends Controller
 
             DB::commit();
 
+            $planPayload = $this->buildPlanPayload($user);
+
             return sendResponse(true, 'Google login successful', [
                 'user_id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'image' => $user->modified_image,                
+                'image' => $user->modified_image,
                 'is_premium' => $user->is_premium,
                 'is_admin' => $user->is_admin,
+                'plans' => $planPayload,
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_at' => $tokenModel->expires_at->toDateTimeString(),
@@ -171,6 +176,7 @@ class AuthenticationController extends Controller
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error($e);
+
             return sendResponse(false, $e->getMessage(), null, 500);
         }
     }
@@ -183,7 +189,7 @@ class AuthenticationController extends Controller
         try {
             $user = User::where('email', $request->email)->first();
 
-            if (!$user || !Hash::check($request->password, $user->password)) {
+            if (! $user || ! Hash::check($request->password, $user->password)) {
                 throw ValidationException::withMessages([
                     'email' => ['The provided email or password is incorrect.'],
                 ]);
@@ -194,7 +200,6 @@ class AuthenticationController extends Controller
                     'email' => ['Your account has been suspended. Please contact support.'],
                 ]);
             }
-
 
             // Single update for user data
             $user->update([
@@ -219,14 +224,16 @@ class AuthenticationController extends Controller
             $expiresInSeconds = Carbon::now()->diffInSeconds($tokenModel->expires_at);
 
             $verified = $this->authService->isVerified($user);
-            if (!$verified) {
+            if (! $verified) {
                 $this->authService->generateOtp($user);
                 Mail::to($user->email)->send(new OtpMail($user, $user->otp));
             }
 
             $message = $verified
-                ? "User logged in successfully."
-                : "User logged in successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
+                ? 'User logged in successfully.'
+                : 'User logged in successfully. Please verify your email. A one-time password (OTP) has been sent to your email ending in ***'.substr($user->email, -2).'.';
+
+            $planPayload = $this->buildPlanPayload($user);
 
             $data = [
                 'user_id' => $user->id,
@@ -236,7 +243,8 @@ class AuthenticationController extends Controller
                 'image' => $user->modified_image,
                 'is_premium' => $user->is_premium,
                 'is_admin' => $user->is_admin,
-                'otp' => $verified ? "Verified" : $user->otp,
+                'plans' => $planPayload,
+                'otp' => $verified ? 'Verified' : $user->otp,
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => $expiresInSeconds,
@@ -255,6 +263,7 @@ class AuthenticationController extends Controller
             return sendResponse(true, 'Logged in successfully', $data, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -270,11 +279,14 @@ class AuthenticationController extends Controller
                 $request->user()->token()->revoke();
                 // Optionally delete the user device record to enforce a new login on next attempt
                 $request->user()->userDevices()->delete();
+
                 return sendResponse(true, __('Logged out successfully'), null, Response::HTTP_OK);
             }
+
             return sendResponse(false, __('Unauthenticated'), null, Response::HTTP_UNAUTHORIZED);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -296,6 +308,7 @@ class AuthenticationController extends Controller
             return sendResponse(true, __('OTP verified'), null, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -308,7 +321,7 @@ class AuthenticationController extends Controller
         try {
             $user = $request->user();
             $this->authService->resendOtp($user);
-            $message = 'A new one-time password (OTP) has been sent to your email ending in ***' . substr($user->email, -2) . '.';
+            $message = 'A new one-time password (OTP) has been sent to your email ending in ***'.substr($user->email, -2).'.';
             $otp = $user->otp;
 
             Mail::to($user->email)->send(new OtpMail($user, $otp));
@@ -316,6 +329,7 @@ class AuthenticationController extends Controller
             return sendResponse(true, $message, $otp, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -337,6 +351,7 @@ class AuthenticationController extends Controller
             return sendResponse(true, __('Password changed successfully'), null, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -350,12 +365,14 @@ class AuthenticationController extends Controller
             $user = $this->authService->verifyEmail($request->email);
             $this->authService->generateOtp($user);
             $token = $this->emailTokenService->createToken($user);
-            $message = "An OTP has been sent to your email ending in ***" . substr($user->email, -2) . ".";
+            $message = 'An OTP has been sent to your email ending in ***'.substr($user->email, -2).'.';
 
             Mail::to($user->email)->send(new OtpMail($user, $user->otp));
+
             return sendResponse(true, $message, ['token' => $token, 'otp' => $user->otp], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -368,15 +385,17 @@ class AuthenticationController extends Controller
         try {
             $user = $this->authService->verifyEmail($request->email);
             $verify = $this->emailTokenService->verifyToken($user, $request->token);
-            if (!$verify) {
-                throw new \Exception("Invalid token");
+            if (! $verify) {
+                throw new \Exception('Invalid token');
             }
             $this->authService->resendOtp($user);
-            $message = "A new one-time password (OTP) has been sent to your email ending in ***" . substr($user->email, -2) . ".";
+            $message = 'A new one-time password (OTP) has been sent to your email ending in ***'.substr($user->email, -2).'.';
             Mail::to($user->email)->send(new OtpMail($user, $user->otp));
+
             return sendResponse(true, $message, ['token' => $request->token, 'otp' => $user->otp], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -389,13 +408,15 @@ class AuthenticationController extends Controller
         try {
             $user = $this->authService->verifyEmail($request->email);
             $verify = $this->emailTokenService->verifyToken($user, $request->token);
-            if (!$verify) {
-                throw new \Exception("Invalid token");
+            if (! $verify) {
+                throw new \Exception('Invalid token');
             }
             $this->authService->verifyOtp($user, $request->otp);
-            return sendResponse(true, "OTP verified", ['token' => $request->token], Response::HTTP_OK);
+
+            return sendResponse(true, 'OTP verified', ['token' => $request->token], Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -415,10 +436,45 @@ class AuthenticationController extends Controller
                 $this->firebaseNotificationService->sendToDevice($user->fcm_token, 'Password Reset', 'Your password has been reset successfully.');
             }
 
-            return sendResponse(true, "Password reset successfully", null, Response::HTTP_OK);
+            return sendResponse(true, 'Password reset successfully', null, Response::HTTP_OK);
         } catch (Throwable $error) {
             Log::error($error);
+
             return sendResponse(false, $error->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private function buildPlanPayload(User $user): array
+    {
+        $activeSubscription = UserSubscriptions::with('subscription')
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->latest('ends_at')
+            ->first()?->subscription;
+
+        $recommendedSubscription = Subscription::active()
+            ->orderBy('price')
+            ->first();
+
+        return [
+            'current' => $this->formatPlanData($activeSubscription),
+            'recommended' => $this->formatPlanData($recommendedSubscription),
+        ];
+    }
+
+    private function formatPlanData(?Subscription $subscription): ?array
+    {
+        if (! $subscription) {
+            return null;
+        }
+
+        return [
+            'id' => $subscription->id,
+            'name' => $subscription->duration,
+            'tag' => $subscription->tag,
+            'price' => $subscription->price,
+            'features' => $subscription->features,
+            'status' => $subscription->status_label ?? null,
+        ];
     }
 }
