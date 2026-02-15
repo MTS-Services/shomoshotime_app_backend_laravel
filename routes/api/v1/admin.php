@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\V1\CmsPageController;
 use App\Http\Controllers\API\V1\ContentManagement\ContentController;
 use App\Http\Controllers\API\V1\ContentManagement\FlashCardController;
 use App\Http\Controllers\API\V1\NotificationController;
@@ -20,6 +21,13 @@ Route::controller(UserController::class)->prefix('user')->group(function () {
 });
 Route::controller(AnalyticsController::class)->group(function () {
     Route::post('/adminAnalytics', 'adminAnalytics')->name('admin-analytics');
+});
+Route::controller(CmsPageController::class)->prefix('cms-pages')->group(function () {
+    Route::post('/list', 'index')->name('cms-pages.index');
+    Route::post('/create', 'store')->name('cms-pages.store');
+    Route::post('/show', 'show')->name('cms-pages.show');
+    Route::post('/update', 'update')->name('cms-pages.update');
+    Route::post('/delete', 'destroy')->name('cms-pages.delete');
 });
 Route::prefix('content')->group(function () {
     // Content routes
