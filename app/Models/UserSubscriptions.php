@@ -13,10 +13,16 @@ class UserSubscriptions extends BaseModel
         'starts_at',
         'ends_at',
         'is_active',
+        'is_cancel',
 
         'created_by',
         'updated_by',
         'deleted_by',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'is_cancel' => 'boolean',
     ];
 
     //
