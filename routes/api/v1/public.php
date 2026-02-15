@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\V1\AreaController;
+use App\Http\Controllers\API\V1\CmsPageController;
 use App\Http\Controllers\API\V1\PackageManagement\SubscriptionPlanController;
 use App\Http\Controllers\API\V1\AgentController;
 use App\Http\Controllers\API\V1\NotificationController;
@@ -20,3 +21,6 @@ Route::post('/send-notification-topic', [NotificationController::class, 'sendToT
 Route::get('/audio/{filename}', [ContentController::class, 'stream'])
     ->where('filename', '.*')
     ->name('user.audio.stream');
+
+Route::post('/cms-pages/show', [CmsPageController::class, 'publicShow'])
+    ->name('cms-pages.public-show');
