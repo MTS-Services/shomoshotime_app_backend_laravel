@@ -48,9 +48,7 @@ class CmsPageController extends Controller
             }
 
             $data = $request->validated();
-            $data['type'] = CmsPage::normalizeType($data['type']);
             $data['created_by'] = $request->user()->id;
-            $data['updated_by'] = $request->user()->id;
 
             $cmsPage = CmsPage::create($data);
 
@@ -85,9 +83,6 @@ class CmsPageController extends Controller
             $data = $request->validated();
             $cmsPage = CmsPage::findOrFail($data['id']);
 
-            if (isset($data['type'])) {
-                $data['type'] = CmsPage::normalizeType($data['type']);
-            }
             $data['updated_by'] = $request->user()->id;
 
             $cmsPage->update(collect($data)->except('id')->toArray());
@@ -130,8 +125,7 @@ class CmsPageController extends Controller
                 return sendResponse(false, 'Validation Error', $validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $normalizedType = CmsPage::normalizeType($request->input('type'));
-            $cmsPage = CmsPage::where('type', $normalizedType)
+            $cmsPage = CmsPage::where('type', $request->input('type'))
                 ->where('is_active', true)
                 ->first();
 
