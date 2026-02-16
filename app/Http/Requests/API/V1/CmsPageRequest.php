@@ -3,6 +3,7 @@
 namespace App\Http\Requests\API\V1;
 
 use App\Http\Requests\API\BaseRequest;
+use App\Models\CmsPage;
 use Illuminate\Validation\Rule;
 
 class CmsPageRequest extends BaseRequest
@@ -26,9 +27,8 @@ class CmsPageRequest extends BaseRequest
 
         if ($routeName === 'api.v1.admin.cms-pages.store') {
             return [
-                'type' => ['required', 'string', 'max:255', Rule::unique('cms_pages', 'type')],
+                'type' => ['required', 'string', 'max:255', Rule::in(CmsPage::allowedTypes()), Rule::unique('cms_pages', 'type')],
                 'content' => ['required', 'string'],
-                'is_active' => ['nullable', 'boolean'],
                 'sort_order' => ['nullable', 'integer', 'min:0'],
             ];
         }
@@ -38,9 +38,8 @@ class CmsPageRequest extends BaseRequest
 
             return [
                 'id' => ['required', 'integer', 'exists:cms_pages,id'],
-                'type' => ['sometimes', 'string', 'max:255', Rule::unique('cms_pages', 'type')->ignore($ignoreId)],
+                'type' => ['sometimes', 'string', 'max:255', Rule::in(CmsPage::allowedTypes()), Rule::unique('cms_pages', 'type')->ignore($ignoreId)],
                 'content' => ['required', 'string'],
-                'is_active' => ['nullable', 'boolean'],
                 'sort_order' => ['nullable', 'integer', 'min:0'],
             ];
         }
