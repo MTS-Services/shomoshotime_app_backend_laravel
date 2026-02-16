@@ -24,10 +24,7 @@ Route::controller(AnalyticsController::class)->group(function () {
 });
 Route::controller(CmsPageController::class)->prefix('cms-pages')->group(function () {
     Route::post('/list', 'index')->name('cms-pages.index');
-    Route::post('/create', 'store')->name('cms-pages.store');
-    Route::post('/show', 'show')->name('cms-pages.show');
-    Route::post('/update', 'update')->name('cms-pages.update');
-    Route::post('/delete', 'destroy')->name('cms-pages.delete');
+    Route::post('/save', 'storeAndUpdate')->name('cms-pages.save');
 });
 Route::prefix('content')->group(function () {
     // Content routes
