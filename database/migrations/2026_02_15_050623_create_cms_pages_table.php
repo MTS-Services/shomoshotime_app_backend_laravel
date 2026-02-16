@@ -19,7 +19,6 @@ return new class extends Migration
             $table->unsignedBigInteger('sort_order')->default(0);
             $table->string('type')->unique();
             $table->longText('content');
-            $table->boolean('is_active')->default(true);
             $table->timestamps();
             $this->addAuditColumns($table);
         });
