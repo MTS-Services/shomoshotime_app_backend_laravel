@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\UserResource;
 use App\Services\UserManagement\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
@@ -90,6 +91,25 @@ class ProfileController extends Controller
 
             if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'email' => ['required', 'email'],
+                'password' => ['required', 'string', 'min:6'],
+            ]);
+
+            if ($validator->fails()) {
+                return sendResponse(false, $validator->errors()->first(), null, Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $validated = $validator->validated();
+
+            if ($user->email !== $validated['email']) {
+                return sendResponse(false, 'Invalid credentials provided.', null, Response::HTTP_UNAUTHORIZED);
+            }
+
+            if (! Hash::check($validated['password'], $user->password)) {
+                return sendResponse(false, 'Invalid credentials provided.', null, Response::HTTP_UNAUTHORIZED);
             }
 
             if (method_exists($user, 'tokens')) {
