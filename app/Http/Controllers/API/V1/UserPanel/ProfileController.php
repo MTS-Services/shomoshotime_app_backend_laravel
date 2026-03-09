@@ -49,7 +49,7 @@ class ProfileController extends Controller
                 'name' => 'sometimes|required|string|max:255',
                 'email' => 'sometimes|required|string|email|max:255|unique:users,email,'.$user->id,
                 'password' => 'sometimes|nullable|string|min:8|confirmed',
-                'file' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+                'file' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,webp',
             ]);
 
             if ($validator->fails()) {
