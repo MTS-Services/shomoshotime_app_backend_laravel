@@ -40,4 +40,8 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    'revenuecat' => [
+        'webhook_secret' => env('REVENUECAT_WEBHOOK_SECRET'),
+    ],
+
 ];
