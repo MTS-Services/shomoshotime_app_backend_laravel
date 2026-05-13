@@ -9,6 +9,7 @@ class QuestionSet extends BaseModel
     protected $fillable = [
         'sort_order',
         'category',
+        'type',
         'title',
         'subtitle',
         'status',
@@ -24,6 +25,19 @@ class QuestionSet extends BaseModel
     public const STATUS_MEDIUM = 1;
 
     public const STATUS_HARD = 2;
+
+    public const TYPE_PRACTICE = 0;
+
+    public const TYPE_MOCK_TEST = 1;
+
+
+    public static function getTypeList(): array
+    {
+        return [
+            self::TYPE_PRACTICE => 'Practice',
+            self::TYPE_MOCK_TEST => 'Mock Test',
+        ];
+    }
 
     /**
      * Status list (same pattern as your example)
@@ -77,7 +91,7 @@ class QuestionSet extends BaseModel
                                     End of Relation's
     ===================== ===================== ===================== ===================== */
 
-  
+
     // Helper Methods
     public function getTotalQuestions(): int
     {
