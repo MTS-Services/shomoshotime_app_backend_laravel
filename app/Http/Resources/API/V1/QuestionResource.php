@@ -19,12 +19,14 @@ class QuestionResource extends JsonResource
             'sort_order' => $this->sort_order,
             'question_set_id' => $this->question_set_id,
             'file' => storage_url($this->file),
+            'file_attributes' => $this->file_attributes,
+            'rationale' => $this->rationale,
             'question' => $this->question,
             'option_a' => $this->option_a,
             'option_b' => $this->option_b,
             'option_c' => $this->option_c,
             'option_d' => $this->option_d,
-            'answer' => $this->answer,            
+            'answer' => $this->answer,
             // User-specific statistics (if loaded)
             // 'user_stats' => $this->when(isset($this->user_answer), [
             //     'answered' => true,
@@ -46,11 +48,11 @@ class QuestionResource extends JsonResource
             //         'last_attempt_number' => $this->user_answer->last_mock_attempt_number,
             //     ],
             // ]),
-            
+
             'questionSet' => $this->whenLoaded('questionSet', function () {
                 return new QuestionSetResource($this->questionSet);
             }),
-            
+
             'created_at' => $this->created_at_formatted ?? $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at_formatted ?? $this->updated_at->format('Y-m-d H:i:s'),
             'creater_name' => $this->creater?->name ?? 'N/A',
