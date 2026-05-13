@@ -5,9 +5,11 @@ namespace App\Http\Controllers\API\V1\QuestionManagement;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\V1\QuestionSetRequest;
 use App\Http\Resources\API\V1\QuestionSetResource;
+use App\Models\QuestionSet;
 use App\Services\QuestionManagement\QuestionSetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -32,7 +34,21 @@ class QuestionSetController extends Controller
                 return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
             }
 
-            $query = $this->service->getQuestionSets();
+            $validator = Validator::make($request->all(), [
+                'type' => 'nullable|integer|in:' . implode(',', array_keys(QuestionSet::getTypeList())),
+                'per_page' => 'nullable|integer|min:1',
+                'search' => 'nullable|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return sendResponse(false, $validator->errors()->first(), null, Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $type = $request->has('type')
+                ? (int) $request->input('type')
+                : QuestionSet::TYPE_PRACTICE;
+
+            $query = $this->service->getQuestionSets($type, applyUserProgressScope: false);
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('category', $searchQuery)
@@ -40,11 +56,20 @@ class QuestionSetController extends Controller
             }
             $questionSets = $query->paginate($request->input('per_page', 10));
 
+            if ($questionSets->total() === 0) {
+                return sendResponse(
+                    false,
+                    QuestionSet::emptyListMessageForType($type, $request->filled('search')),
+                    null,
+                    Response::HTTP_NOT_FOUND
+                );
+            }
+
             return sendResponse(true, ' Question sets fetched successfully.', QuestionSetResource::collection($questionSets), Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Todos Error: '.$e->getMessage());
+            Log::error('Get Todos Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -65,9 +90,9 @@ class QuestionSetController extends Controller
 
             return sendResponse(true, 'Question Set created successfully.', new QuestionSetResource($question_set), Response::HTTP_CREATED);
         } catch (Throwable $e) {
-            Log::error('Create Question Set Error: '.$e->getMessage());
+            Log::error('Create Question Set Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong. ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -89,12 +114,11 @@ class QuestionSetController extends Controller
 
             return sendResponse(true, 'Question Set updated successfully.', new QuestionSetResource($question_set), Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Update Question Set Error: '.$e->getMessage());
+            Log::error('Update Question Set Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong. ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
 
     public function delete(Request $request, $id)
     {
@@ -113,9 +137,9 @@ class QuestionSetController extends Controller
 
             return sendResponse(true, 'Question Set deleted successfully.', null, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Delete Question Set Error: '.$e->getMessage());
+            Log::error('Delete Question Set Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong. '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong. ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
