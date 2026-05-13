@@ -23,9 +23,15 @@ class QuestionSetService
             $userId = Auth::id();
 
             // 1. Get question and validate
-            $question = Question::where('question_set_id', $questionSetId)
+            $question = Question::query()
+                ->where('question_set_id', $questionSetId)
                 ->where('id', $questionId)
+                ->with('questionSet')
                 ->firstOrFail();
+
+            $questionSet = $question->questionSet;
+
+            $isPracticeSet = (int) $questionSet->type === QuestionSet::TYPE_PRACTICE;
 
             // 2. Get or create analytics record
             $analytics = QuestionSetAnalytic::firstOrCreate(
@@ -34,13 +40,22 @@ class QuestionSetService
                     'question_set_id' => $questionSetId,
                 ],
                 [
-                    'current_mode' => 'practice',
                     'created_by' => $userId,
                 ]
             );
 
+            $inMockSession = (int) $questionSet->type === QuestionSet::TYPE_MOCK_TEST && $analytics->hasActiveMockTestAttempt();
+
+            if ((int) $questionSet->type === QuestionSet::TYPE_MOCK_TEST && ! $inMockSession) {
+                throw new Exception('Start a mock test before answering questions in this question set.');
+            }
+
+            if ((int) $questionSet->type === QuestionSet::TYPE_PRACTICE && $analytics->hasActiveMockTestAttempt()) {
+                throw new Exception('This question set only supports practice mode.');
+            }
+
             // 3. Validate user can answer (check mode restrictions)
-            $this->validateAnswerSubmission($analytics, $questionSetId);
+            $this->validateAnswerSubmission($analytics, $questionSet);
 
             // 4. Check if answer is correct
             $isCorrect = $question->isCorrectAnswer($answer);
@@ -56,19 +71,19 @@ class QuestionSetService
             $isFirstTimeAnsweringInPractice = ! $questionAnswer->exists || $questionAnswer->getTotalPracticeAttempts() === 0;
 
             // 7. Update question answer based on current mode
-            if ($analytics->isPracticeMode()) {
+            if (! $inMockSession) {
                 $this->updatePracticeAnswer($questionAnswer, $answer, $isCorrect, $isFirstTimeAnsweringInPractice);
             } else {
                 $this->updateMockTestAnswer($questionAnswer, $answer, $isCorrect, $analytics->current_mock_attempt_number);
             }
 
-            $questionAnswer->last_mode = $analytics->current_mode;
+            $questionAnswer->last_mode = $inMockSession ? 'mock_test' : 'practice';
             $questionAnswer->last_answer = $answer;
             $questionAnswer->updated_by = $userId;
             $questionAnswer->save();
 
             // 8. Update analytics and check completion
-            if ($analytics->isPracticeMode()) {
+            if (! $inMockSession) {
                 $this->updatePracticeAnalytics($analytics, $isCorrect, $isFirstTimeAnsweringInPractice, $questionSetId);
             } else {
                 $this->updateMockTestAnalytics($analytics, $isCorrect, $questionSetId);
@@ -79,11 +94,11 @@ class QuestionSetService
                 'success' => true,
                 'is_correct' => $isCorrect,
                 'correct_answer' => $question->answer,
-                'current_mode' => $analytics->current_mode,
+                'mock_test_in_progress' => $analytics->hasActiveMockTestAttempt(),
                 'practice_completed' => $analytics->practice_completed,
-                'mock_test_attempts' => $analytics->mock_test_attempts,
+                'mock_test_attempts' => $isPracticeSet ? 0 : $analytics->mock_test_attempts,
                 'can_start_mock_test' => $analytics->canStartMockTest(),
-                'remaining_mock_attempts' => $analytics->getRemainingMockAttempts(),
+                'remaining_mock_attempts' => $isPracticeSet ? 0 : $analytics->getRemainingMockAttempts(),
                 'question_stats' => [
                     'practice_attempts' => $questionAnswer->getTotalPracticeAttempts(),
                     'practice_correct' => $questionAnswer->practice_correct_attempts,
@@ -101,23 +116,29 @@ class QuestionSetService
         return DB::transaction(function () use ($questionSetId) {
             $userId = Auth::id();
 
-            $analytics = QuestionSetAnalytic::where('user_id', $userId)
-                ->where('question_set_id', $questionSetId)
-                ->first();
+            $questionSet = QuestionSet::query()->findOrFail($questionSetId);
 
-            // Check if analytics exists
-            if (! $analytics) {
-                throw new Exception('You must complete practice mode before starting a mock test.');
+            if ((int) $questionSet->type === QuestionSet::TYPE_PRACTICE) {
+                throw new Exception('Mock tests are only available for question sets of type mock test.');
             }
 
-            // Validate can start mock test
+            $analytics = QuestionSetAnalytic::firstOrCreate(
+                [
+                    'user_id' => $userId,
+                    'question_set_id' => $questionSetId,
+                ],
+                [
+                    'created_by' => $userId,
+                ]
+            );
+
+            $analytics->loadMissing('questionSet');
+
             if (! $analytics->canStartMockTest()) {
-                if (! $analytics->practice_completed) {
-                    throw new Exception('You must complete practice mode before starting a mock test.');
-                }
                 if ($analytics->hasCompletedAllMockTests()) {
                     throw new Exception('You have already completed all 3 mock test attempts.');
                 }
+
                 throw new Exception('Cannot start mock test at this time.');
             }
 
@@ -133,7 +154,6 @@ class QuestionSetService
 
             // Increment mock test attempts
             $analytics->mock_test_attempts++;
-            $analytics->current_mode = 'mock_test';
             $analytics->current_mock_attempt_number = $analytics->mock_test_attempts;
             $analytics->current_mock_questions_answered = 0;
             $analytics->updated_by = $userId;
@@ -165,7 +185,7 @@ class QuestionSetService
                     'status' => $mockAttempt->status,
                 ],
                 'analytics' => [
-                    'current_mode' => $analytics->current_mode,
+                    'mock_test_in_progress' => $analytics->hasActiveMockTestAttempt(),
                     'remaining_attempts' => $analytics->getRemainingMockAttempts(),
                 ],
             ];
@@ -175,17 +195,15 @@ class QuestionSetService
     /**
      * Validate if user can submit answer in current state
      */
-    private function validateAnswerSubmission(QuestionSetAnalytic $analytics, int $questionSetId): void
+    private function validateAnswerSubmission(QuestionSetAnalytic $analytics, QuestionSet $questionSet): void
     {
-        // If in practice mode, always allow
-        if ($analytics->isPracticeMode()) {
+        if ((int) $questionSet->type === QuestionSet::TYPE_PRACTICE) {
             return;
         }
 
-        // If in mock test mode, check if attempt exists and is not completed
         $currentAttempt = MockTestAttempt::where('user_id', Auth::id())
-            ->where('question_set_id', $questionSetId)
-            ->where('attempt_number', $analytics->current_mock_attempt_number)
+            ->where('question_set_id', $questionSet->id)
+            ->where('status', MockTestAttempt::STATUS_IN_PROGRESS)
             ->first();
 
         if (! $currentAttempt) {
@@ -259,10 +277,9 @@ class QuestionSetService
         $analytics->updated_by = Auth::id();
         $analytics->save();
 
-        // Update current mock test attempt
         $mockAttempt = MockTestAttempt::where('user_id', Auth::id())
             ->where('question_set_id', $questionSetId)
-            ->where('attempt_number', $analytics->current_mock_attempt_number)
+            ->where('status', MockTestAttempt::STATUS_IN_PROGRESS)
             ->first();
 
         if (! $mockAttempt) {
@@ -285,8 +302,6 @@ class QuestionSetService
                 $analytics->best_mock_percentage = $mockAttempt->score_percentage;
             }
 
-            // Reset to practice mode
-            $analytics->current_mode = 'practice';
             $analytics->current_mock_attempt_number = 0;
             $analytics->current_mock_questions_answered = 0;
             $analytics->save();
@@ -304,6 +319,8 @@ class QuestionSetService
 
         $questionSet = QuestionSet::with(['questions'])->findOrFail($questionSetId);
         $totalQuestions = $questionSet->getTotalQuestions();
+        $isPracticeSet = (int) $questionSet->type === QuestionSet::TYPE_PRACTICE;
+        $isMockTestSet = (int) $questionSet->type === QuestionSet::TYPE_MOCK_TEST;
 
         $analytics = QuestionSetAnalytic::where('user_id', $userId)
             ->where('question_set_id', $questionSetId)
@@ -316,10 +333,11 @@ class QuestionSetService
                     'title' => $questionSet->title,
                     'subtitle' => $questionSet->subtitle,
                     'category' => $questionSet->category,
+                    'type' => (int) $questionSet->type,
                     'difficulty' => $questionSet->getDifficultyLabel(),
                     'total_questions' => $totalQuestions,
                 ],
-                'mode' => 'practice',
+                'mock_test_in_progress' => false,
                 'practice' => [
                     'completed' => false,
                     'questions_answered' => 0,
@@ -327,7 +345,7 @@ class QuestionSetService
                     'progress_percentage' => 0,
                 ],
                 'mock_tests' => [
-                    'can_start' => false,
+                    'can_start' => $isMockTestSet,
                     'attempts_used' => 0,
                     'attempts_remaining' => 3,
                     'best_score' => 0,
@@ -337,10 +355,14 @@ class QuestionSetService
             ];
         }
 
+        $analytics->loadMissing('questionSet');
+
         $mockAttempts = MockTestAttempt::where('user_id', $userId)
             ->where('question_set_id', $questionSetId)
             ->orderBy('attempt_number', 'asc')
             ->get();
+
+        $mockTestInProgress = $isMockTestSet && $analytics->hasActiveMockTestAttempt();
 
         return [
             'question_set' => [
@@ -348,29 +370,30 @@ class QuestionSetService
                 'title' => $questionSet->title,
                 'subtitle' => $questionSet->subtitle,
                 'category' => $questionSet->category,
+                'type' => (int) $questionSet->type,
                 'difficulty' => $questionSet->getDifficultyLabel(),
                 'total_questions' => $totalQuestions,
             ],
-            'mode' => $analytics->current_mode,
+            'mock_test_in_progress' => $mockTestInProgress,
             'practice' => [
-                'completed' => $analytics->practice_completed,
-                'questions_answered' => $analytics->practice_questions_answered,
-                'correct_answers' => $analytics->practice_correct_answers,
-                'progress_percentage' => round($analytics->getPracticeProgress(), 2),
-                'completed_at' => $analytics->practice_completed_at?->format('Y-m-d H:i:s'),
+                'completed' => $isPracticeSet ? $analytics->practice_completed : false,
+                'questions_answered' => $isPracticeSet ? $analytics->practice_questions_answered : 0,
+                'correct_answers' => $isPracticeSet ? $analytics->practice_correct_answers : 0,
+                'progress_percentage' => $isPracticeSet ? round($analytics->getPracticeProgress(), 2) : 0,
+                'completed_at' => $isPracticeSet ? $analytics->practice_completed_at?->format('Y-m-d H:i:s') : null,
             ],
             'mock_tests' => [
-                'can_start' => $analytics->canStartMockTest(),
-                'attempts_used' => $analytics->mock_test_attempts,
-                'attempts_remaining' => $analytics->getRemainingMockAttempts(),
-                'best_score' => $analytics->best_mock_score,
-                'best_percentage' => (float) $analytics->best_mock_percentage,
-                'current_attempt' => $analytics->isMockTestMode() ? [
+                'can_start' => $isMockTestSet && $analytics->canStartMockTest(),
+                'attempts_used' => $isMockTestSet ? $analytics->mock_test_attempts : 0,
+                'attempts_remaining' => $isMockTestSet ? $analytics->getRemainingMockAttempts() : 0,
+                'best_score' => $isMockTestSet ? $analytics->best_mock_score : 0,
+                'best_percentage' => $isMockTestSet ? (float) $analytics->best_mock_percentage : 0,
+                'current_attempt' => $mockTestInProgress ? [
                     'attempt_number' => $analytics->current_mock_attempt_number,
                     'questions_answered' => $analytics->current_mock_questions_answered,
                     'progress_percentage' => round(($analytics->current_mock_questions_answered / $totalQuestions) * 100, 2),
                 ] : null,
-                'attempts' => $mockAttempts->map(function ($attempt) {
+                'attempts' => $isMockTestSet ? $mockAttempts->map(function ($attempt) {
                     return [
                         'attempt_number' => $attempt->attempt_number,
                         'status' => $attempt->status,
@@ -382,7 +405,7 @@ class QuestionSetService
                         'started_at' => $attempt->started_at->format('Y-m-d H:i:s'),
                         'completed_at' => $attempt->completed_at?->format('Y-m-d H:i:s'),
                     ];
-                }),
+                })->values()->all() : [],
             ],
         ];
     }
@@ -446,26 +469,39 @@ class QuestionSetService
     }
 
     /**
-     * Get all question sets with user progress
+     * Get question sets. When $applyUserProgressScope is true, $questionSetType filters rows for the current user
+     * (TYPE_PRACTICE = in-progress practice; TYPE_MOCK_TEST = mock sets). When false (admin list), $questionSetType
+     * filters by question_sets.type. When $applyUserProgressScope is false and $questionSetType is null, no type filter
+     * (e.g. dashboard). When false and $questionSetType is 0 or 1, restrict to that type (admin list).
      */
     public function getQuestionSets(
-        string $current_mode = 'practice',
+        ?int $questionSetType = null,
         string $orderBy = 'created_at',
-        string $order = 'desc'
+        string $order = 'desc',
+        bool $applyUserProgressScope = true,
     ): Builder {
-        $query = QuestionSet::withCount('questions');
+        $query = QuestionSet::query()->withCount('questions');
 
-        // Always eager-load analytics for the current user & mode
+        if (! $applyUserProgressScope) {
+            if ($questionSetType === null) {
+                return $query->orderBy($orderBy, $order);
+            }
 
-        if ($current_mode === 'practice') {
-            $query->with(['questionAnswers', 'analytics' => function ($q) use ($current_mode) {
-                $q->where('user_id', Auth::id())
-                    ->where('current_mode', $current_mode)->where('practice_completed', false);
-            }])
-                ->where(function ($q) use ($current_mode) {
-                    $q->whereHas('analytics', function ($q2) use ($current_mode) {
+            return $query->where('type', $questionSetType)->orderBy($orderBy, $order);
+        }
+
+        $questionSetType ??= QuestionSet::TYPE_PRACTICE;
+
+        if ($questionSetType === QuestionSet::TYPE_PRACTICE) {
+            $query->where('type', QuestionSet::TYPE_PRACTICE)
+                ->with(['questionAnswers', 'analytics' => function ($q) {
+                    $q->where('user_id', Auth::id())
+                        ->where('practice_completed', false);
+                }])
+                ->where(function ($q) {
+                    $q->whereHas('analytics', function ($q2) {
                         $q2->where('user_id', Auth::id())
-                            ->where('current_mode', $current_mode)->where('practice_completed', false);
+                            ->where('practice_completed', false);
                     })
                         ->orWhereDoesntHave('analytics', function ($q2) {
                             $q2->where('user_id', Auth::id());
@@ -473,21 +509,11 @@ class QuestionSetService
                 });
         }
 
-        if ($current_mode === 'mock_test') {
-            $query->with(['questionAnswers', 'analytics' => function ($q) use ($current_mode) {
-                $q->where('user_id', Auth::id())
-                    ->where('current_mode', $current_mode)->orWhere(function ($q2) {
-                        $q2->where('current_mode', 'practice')
-                            ->where('practice_completed', true);
-                    });
-            }])
-                ->whereHas('analytics', function ($q) use ($current_mode) {
-                    $q->where('user_id', Auth::id())
-                        ->where('current_mode', $current_mode)->orWhere(function ($q2) {
-                            $q2->where('current_mode', 'practice')
-                                ->where('practice_completed', true);
-                        });
-                });
+        if ($questionSetType === QuestionSet::TYPE_MOCK_TEST) {
+            $query->where('type', QuestionSet::TYPE_MOCK_TEST)
+                ->with(['questionAnswers', 'analytics' => function ($q) {
+                    $q->where('user_id', Auth::id());
+                }]);
         }
 
         return $query->orderBy($orderBy, $order);
@@ -499,7 +525,6 @@ class QuestionSetService
     public function getQuestions(?int $questionSetId = null, string $orderBy = 'created_at', string $order = 'desc'): Builder
     {
         return Question::with('questionSet')->where('question_set_id', $questionSetId)->orderBy($orderBy, $order);
-
     }
 
     /**
@@ -525,6 +550,7 @@ class QuestionSetService
     {
         return DB::transaction(function () use ($data) {
             $data['status'] = $data['status'] ?? QuestionSet::STATUS_EASY;
+            $data['type'] = $data['type'] ?? QuestionSet::TYPE_PRACTICE;
             $data['created_by'] = Auth::id();
 
             return QuestionSet::create($data);

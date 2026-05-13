@@ -13,7 +13,7 @@ use Throwable;
 
 class QuestionController extends Controller
 {
-        protected QuestionService $service;
+    protected QuestionService $service;
 
     public function __construct(QuestionService $service)
     {
@@ -31,7 +31,7 @@ class QuestionController extends Controller
             if (! $user->isAdmin()) {
                 return sendResponse(false, 'Admin access required', null, Response::HTTP_UNAUTHORIZED);
             }
-              $questionId = $request->input('question_set_id');
+            $questionId = $request->input('question_set_id');
 
             if (! $questionId) {
                 return sendResponse(false, 'question_set_id is required', null, Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -39,11 +39,20 @@ class QuestionController extends Controller
             $query = $this->service->getQuestions($questionId);
             $questions = $query->paginate($request->input('per_page', 10));
 
+            if ($questions->total() === 0) {
+                return sendResponse(
+                    false,
+                    'No questions were found for this question set.',
+                    null,
+                    Response::HTTP_NOT_FOUND
+                );
+            }
+
             return sendResponse(true, ' Question fetched successfully.', QuestionResource::collection($questions), Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Todos Error: '.$e->getMessage());
+            Log::error('Get Todos Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -65,9 +74,9 @@ class QuestionController extends Controller
 
             return sendResponse(true, 'Question created successfully.', new QuestionResource($question), Response::HTTP_CREATED);
         } catch (Throwable $e) {
-            Log::error('Create Question Error: '.$e->getMessage());
+            Log::error('Create Question Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -85,14 +94,14 @@ class QuestionController extends Controller
             $findData = $this->service->findData($id);
             $data = $request->all();
             $file = $request->file('file') ?? null;
-            $question = $this->service->updateQuestion($findData, $data , $file);
+            $question = $this->service->updateQuestion($findData, $data, $file);
             $question->load('questionSet');
 
             return sendResponse(true, 'Question updated successfully.', new QuestionResource($question), Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Update Question Error: '.$e->getMessage());
+            Log::error('Update Question Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -112,9 +121,9 @@ class QuestionController extends Controller
 
             return sendResponse(true, 'Question deleted successfully.', null, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Delete Question Error: '.$e->getMessage());
+            Log::error('Delete Question Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong.'.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong.' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

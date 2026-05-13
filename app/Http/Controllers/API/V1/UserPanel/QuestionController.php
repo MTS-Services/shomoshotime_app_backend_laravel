@@ -7,6 +7,7 @@ use App\Http\Resources\API\V1\MockTestAttemptResource;
 use App\Http\Resources\API\V1\QuestionResource;
 use App\Http\Resources\API\V1\QuestionSetAnalyticResource;
 use App\Http\Resources\API\V1\QuestionSetResource;
+use App\Models\QuestionSet;
 use App\Services\QuestionManagement\QuestionSetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,7 @@ class QuestionController extends Controller
     }
 
     /**
-     * Get all question sets with pagination
+     * Get question sets by type: type 0 = practice sets, type 1 = mock test sets (same endpoint).
      */
     public function getQuestionSets(Request $request)
     {
@@ -34,26 +35,45 @@ class QuestionController extends Controller
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $validator = Validator::make($request->all(), [
-                'current_mode' => 'nullable|in:practice,mock_test',
+                'type' => 'nullable|integer|in:' . implode(',', array_keys(QuestionSet::getTypeList())),
                 'per_page' => 'nullable|integer|min:1',
             ]);
 
             if ($validator->fails()) {
-                return sendResponse(false, $validator->errors()->first(), null,
+                return sendResponse(
+                    false,
+                    $validator->errors()->first(),
+                    null,
                     Response::HTTP_UNPROCESSABLE_ENTITY
                 );
             }
-            $current_mode = $request->input('current_mode', 'practice');
-            $questions = $this->questionSetService->getQuestionSets($current_mode);
+
+            $type = (int) $request->input('type', QuestionSet::TYPE_PRACTICE);
+
+            $questions = $this->questionSetService->getQuestionSets($type);
             $contents = $questions->paginate($request->input('per_page', 10));
+
+            if ($contents->total() === 0) {
+                return sendResponse(
+                    false,
+                    QuestionSet::emptyListMessageForType($type, false),
+                    null,
+                    Response::HTTP_NOT_FOUND
+                );
+            }
+
             $contents->load('mockTestAttempts');
 
-            return sendResponse(true, 'Questions Set data fetched successfully.', QuestionSetResource::collection($contents), Response::HTTP_OK
+            return sendResponse(
+                true,
+                'Questions Set data fetched successfully.',
+                QuestionSetResource::collection($contents),
+                Response::HTTP_OK
             );
         } catch (Throwable $e) {
-            Log::error('Get Question Sets Error: '.$e->getMessage());
+            Log::error('Get Question Sets Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong: '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong: ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -79,13 +99,29 @@ class QuestionController extends Controller
             $question = $this->questionSetService->getQuestions($questionSetId);
             $questions = $question->paginate($request->input('per_page', 10));
 
-            return sendResponse(true, 'Questions fetched successfully.', QuestionResource::collection($questions), Response::HTTP_OK
-            );
+            if ($questions->total() === 0) {
+                return sendResponse(
+                    false,
+                    'No questions were found for this question set.',
+                    null,
+                    Response::HTTP_NOT_FOUND
+                );
+            }
 
+            return sendResponse(
+                true,
+                'Questions fetched successfully.',
+                QuestionResource::collection($questions),
+                Response::HTTP_OK
+            );
         } catch (Throwable $e) {
             Log::error('Get Questions Error', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 
-            return sendResponse(false, 'Something went wrong', null, Response::HTTP_INTERNAL_SERVER_ERROR
+            return sendResponse(
+                false,
+                'Something went wrong',
+                null,
+                Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
     }
@@ -120,7 +156,7 @@ class QuestionController extends Controller
 
             return sendResponse(true, 'Answer submitted successfully.', $result, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Submit Answer Error: '.$e->getMessage());
+            Log::error('Submit Answer Error: ' . $e->getMessage());
 
             return sendResponse(false, $e->getMessage(), null, Response::HTTP_BAD_REQUEST);
         }
@@ -159,7 +195,7 @@ class QuestionController extends Controller
 
             return sendResponse(true, $result['message'], $result, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Start Mock Test Error: '.$e->getMessage());
+            Log::error('Start Mock Test Error: ' . $e->getMessage());
 
             return sendResponse(false, $e->getMessage(), null, Response::HTTP_BAD_REQUEST);
         }
@@ -195,9 +231,9 @@ class QuestionController extends Controller
 
             return sendResponse(true, 'Progress fetched successfully.', $result, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Progress Error: '.$e->getMessage());
+            Log::error('Get Progress Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong: '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong: ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -228,9 +264,9 @@ class QuestionController extends Controller
 
             return sendResponse(true, 'Question statistics fetched successfully.', $result, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Question Statistics Error: '.$e->getMessage());
+            Log::error('Get Question Statistics Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong: '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong: ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -268,9 +304,9 @@ class QuestionController extends Controller
 
             return sendResponse(true, 'Analytics fetched successfully.', $result, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Analytics Error: '.$e->getMessage());
+            Log::error('Get Analytics Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong: '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong: ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -313,7 +349,7 @@ class QuestionController extends Controller
 
             return sendResponse(true, 'Mock test result fetched successfully.', $result, Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get Mock Test Result Error: '.$e->getMessage());
+            Log::error('Get Mock Test Result Error: ' . $e->getMessage());
 
             return sendResponse(false, $e->getMessage(), null, Response::HTTP_BAD_REQUEST);
         }
@@ -352,9 +388,9 @@ class QuestionController extends Controller
                 'attempts' => $mockAttempts,
             ], Response::HTTP_OK);
         } catch (Throwable $e) {
-            Log::error('Get All Mock Test Results Error: '.$e->getMessage());
+            Log::error('Get All Mock Test Results Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong: '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong: ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -369,7 +405,7 @@ class QuestionController extends Controller
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
 
-            $questions = $this->questionSetService->getQuestionSets();
+            $questions = $this->questionSetService->getQuestionSets(applyUserProgressScope: false);
             $allQuestionSets = $questions->get();
 
             return sendResponse(
@@ -379,9 +415,9 @@ class QuestionController extends Controller
                 Response::HTTP_OK
             );
         } catch (Throwable $e) {
-            Log::error('Get Dashboard Error: '.$e->getMessage());
+            Log::error('Get Dashboard Error: ' . $e->getMessage());
 
-            return sendResponse(false, 'Something went wrong: '.$e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return sendResponse(false, 'Something went wrong: ' . $e->getMessage(), null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

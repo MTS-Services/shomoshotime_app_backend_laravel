@@ -30,13 +30,21 @@ class QuestionSet extends BaseModel
 
     public const TYPE_MOCK_TEST = 1;
 
-
     public static function getTypeList(): array
     {
         return [
             self::TYPE_PRACTICE => 'Practice',
             self::TYPE_MOCK_TEST => 'Mock Test',
         ];
+    }
+
+    public static function emptyListMessageForType(int $type, bool $forSearch = false): string
+    {
+        $label = self::getTypeList()[$type] ?? 'Question';
+
+        return $forSearch
+            ? "No {$label} question sets match your search."
+            : "No {$label} question sets were found.";
     }
 
     /**
@@ -73,10 +81,12 @@ class QuestionSet extends BaseModel
     {
         return $this->hasMany(Question::class, 'question_set_id', 'id');
     }
-      public function analytics(): HasMany
+
+    public function analytics(): HasMany
     {
         return $this->hasMany(QuestionSetAnalytic::class);
     }
+
     public function questionAnswers(): HasMany
     {
         return $this->hasMany(QuestionAnswer::class, 'question_set_id', 'id');
@@ -91,7 +101,6 @@ class QuestionSet extends BaseModel
                                     End of Relation's
     ===================== ===================== ===================== ===================== */
 
-
     // Helper Methods
     public function getTotalQuestions(): int
     {
@@ -100,7 +109,7 @@ class QuestionSet extends BaseModel
 
     public function getDifficultyLabel(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_EASY => 'Easy',
             self::STATUS_MEDIUM => 'Medium',
             self::STATUS_HARD => 'Hard',
@@ -122,5 +131,29 @@ class QuestionSet extends BaseModel
     public function scopeHard($query)
     {
         return $query->where('status', self::STATUS_HARD);
+    }
+
+    public function scopePractice($query)
+    {
+        return $query->where('type', self::TYPE_PRACTICE);
+    }
+
+    public function scopeMockTest($query)
+    {
+        return $query->where('type', self::TYPE_MOCK_TEST);
+    }
+
+    public function getTypeLabelAttribute(): string
+    {
+        return self::getTypeList()[$this->type] ?? 'Unknown';
+    }
+
+    public function getTypeColorAttribute(): string
+    {
+        return match ($this->type) {
+            self::TYPE_PRACTICE => 'badge-success',
+            self::TYPE_MOCK_TEST => 'badge-error',
+            default => 'badge-default',
+        };
     }
 }

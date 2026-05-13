@@ -17,10 +17,8 @@ class QuestionSetAnalyticResource extends JsonResource
         return [
             'id' => $this->id,
             'question_set_id' => $this->question_set_id,
-            'current_mode' => $this->current_mode,
-            'is_practice_mode' => $this->isPracticeMode(),
-            'is_mock_test_mode' => $this->isMockTestMode(),
-            
+            'mock_test_in_progress' => $this->hasActiveMockTestAttempt(),
+
             'practice' => [
                 'questions_answered' => $this->practice_questions_answered,
                 'correct_answers' => $this->practice_correct_answers,
@@ -31,7 +29,7 @@ class QuestionSetAnalyticResource extends JsonResource
                     : 0,
                 'completed_at' => $this->practice_completed_at?->format('Y-m-d H:i:s'),
             ],
-            
+
             'mock_test' => [
                 'total_attempts' => $this->mock_test_attempts,
                 'remaining_attempts' => $this->getRemainingMockAttempts(),
@@ -41,13 +39,13 @@ class QuestionSetAnalyticResource extends JsonResource
                 'best_percentage' => (float) $this->best_mock_percentage,
                 'current_attempt_number' => $this->current_mock_attempt_number,
                 'current_questions_answered' => $this->current_mock_questions_answered,
-                'is_in_progress' => $this->isMockTestMode(),
+                'is_in_progress' => $this->hasActiveMockTestAttempt(),
             ],
-            
+
             'question_set' => $this->whenLoaded('questionSet', function () {
                 return new QuestionSetResource($this->questionSet);
             }),
-            
+
             'user' => $this->whenLoaded('user', function () {
                 return [
                     'id' => $this->user->id,
@@ -55,7 +53,7 @@ class QuestionSetAnalyticResource extends JsonResource
                     'email' => $this->user->email,
                 ];
             }),
-            
+
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];
