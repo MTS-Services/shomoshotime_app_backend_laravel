@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -10,6 +11,8 @@ class Question extends BaseModel
         'sort_order',
         'question_set_id',
         'file',
+        'file_attributes',
+        'rationale',
         'question',
         'option_a',
         'option_b',
@@ -20,7 +23,7 @@ class Question extends BaseModel
         'updated_by',
     ];
 
-     // Helper Methods
+    // Helper Methods
     public function getOptions(): array
     {
         return [
@@ -40,9 +43,8 @@ class Question extends BaseModel
     {
         return $this->belongsTo(QuestionSet::class, 'question_set_id', 'id');
     }
-     public function answers(): HasMany
+    public function answers(): HasMany
     {
         return $this->hasMany(QuestionAnswer::class, 'question_id', 'id');
     }
- 
 }

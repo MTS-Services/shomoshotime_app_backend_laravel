@@ -22,7 +22,9 @@ class QuestionRequest extends BaseRequest
     {
         return [
             'question_set_id'  => 'sometimes|required|exists:question_sets,id',
-            'file'             => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240', 
+            'file'             => 'nullable|file|mimes:jpg,jpeg,png,pdf',
+            'file_attributes'  => 'nullable|string|max:255',
+            'rationale'        => 'nullable|string|max:255',
             'question'         => 'sometimes|required|string|max:1000',
             'option_a'         => 'sometimes|required|string|max:255',
             'option_b'         => 'sometimes|required|string|max:255',
@@ -44,7 +46,12 @@ class QuestionRequest extends BaseRequest
 
             'file.file'                => 'File must be a valid file.',
             'file.mimes'               => 'File must be a type of: jpg, jpeg, png, pdf.',
-            'file.max'                 => 'File may not be greater than 10 MB.',
+
+            'file_attributes.string'   => 'File attributes must be text.',
+            'file_attributes.max'      => 'File attributes may not be greater than 255 characters.',
+
+            'rationale.string'         => 'Rationale must be text.',
+            'rationale.max'            => 'Rationale may not be greater than 255 characters.',
 
             'question.required'        => 'Question is required.',
             'question.string'          => 'Question must be text.',
