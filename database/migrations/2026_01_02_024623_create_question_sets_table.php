@@ -19,6 +19,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('sort_order')->default(0);
             $table->string('category');
+            $table->boolean('type')->default(QuestionSet::TYPE_PRACTICE);
             $table->string('title');
             $table->string('subtitle')->nullable();
             $table->tinyInteger('status')->default(QuestionSet::STATUS_EASY);
