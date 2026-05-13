@@ -16,10 +16,14 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('sort_order')->default(0);            
+            $table->unsignedBigInteger('sort_order')->default(0);
             $table->unsignedBigInteger('question_set_id');
 
             $table->string('file')->nullable();
+            
+            $table->string('file_attributes')->nullable();
+            $table->string('rationale')->nullable();
+
             $table->text('question');
 
             $table->string('option_a');
@@ -29,7 +33,7 @@ return new class extends Migration
 
             $table->string('answer');
             $table->foreign('question_set_id')->references('id')->on('question_sets')->cascadeOnDelete()->cascadeOnUpdate();
-            
+
             $table->timestamps();
             $table->softDeletes();
             $this->addAuditColumns($table);
