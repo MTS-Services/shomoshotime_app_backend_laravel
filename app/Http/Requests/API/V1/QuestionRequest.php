@@ -24,7 +24,7 @@ class QuestionRequest extends BaseRequest
             'question_set_id'  => 'sometimes|required|exists:question_sets,id',
             'file'             => 'nullable|file|mimes:jpg,jpeg,png,pdf',
             'file_attributes'  => 'nullable|string|max:255',
-            'rationale'        => 'nullable|string|max:255',
+            'rationale'        => 'nullable|string',
             'question'         => 'sometimes|required|string|max:1000',
             'option_a'         => 'sometimes|required|string|max:255',
             'option_b'         => 'sometimes|required|string|max:255',
@@ -51,7 +51,6 @@ class QuestionRequest extends BaseRequest
             'file_attributes.max'      => 'File attributes may not be greater than 255 characters.',
 
             'rationale.string'         => 'Rationale must be text.',
-            'rationale.max'            => 'Rationale may not be greater than 255 characters.',
 
             'question.required'        => 'Question is required.',
             'question.string'          => 'Question must be text.',
