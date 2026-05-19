@@ -107,6 +107,40 @@ it('starts mock test for mock question set without existing analytics', function
         )->toBeTrue();
 });
 
+it('includes completed practice question sets in the practice list', function () {
+    $user = User::factory()->create();
+    Auth::login($user);
+
+    $completedSet = QuestionSet::query()->create([
+        'sort_order' => 0,
+        'category' => 'Test',
+        'type' => QuestionSet::TYPE_PRACTICE,
+        'title' => 'Completed practice',
+        'subtitle' => null,
+        'status' => QuestionSet::STATUS_EASY,
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    QuestionSetAnalytic::query()->create([
+        'user_id' => $user->id,
+        'question_set_id' => $completedSet->id,
+        'practice_questions_answered' => 5,
+        'practice_correct_answers' => 4,
+        'practice_completed' => true,
+        'practice_completed_at' => now(),
+        'mock_test_attempts' => 0,
+        'current_mock_attempt_number' => 0,
+        'current_mock_questions_answered' => 0,
+        'created_by' => $user->id,
+    ]);
+
+    $service = app(QuestionSetService::class);
+    $ids = $service->getQuestionSets(QuestionSet::TYPE_PRACTICE)->pluck('id')->all();
+
+    expect($ids)->toContain($completedSet->id);
+});
+
 it('returns only mock test type question sets when type is mock test', function () {
     $user = User::factory()->create();
     Auth::login($user);
