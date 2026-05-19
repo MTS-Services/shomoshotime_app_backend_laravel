@@ -469,10 +469,10 @@ class QuestionSetService
     }
 
     /**
-     * Get question sets. When $applyUserProgressScope is true, $questionSetType filters rows for the current user
-     * (TYPE_PRACTICE = in-progress practice; TYPE_MOCK_TEST = mock sets). When false (admin list), $questionSetType
-     * filters by question_sets.type. When $applyUserProgressScope is false and $questionSetType is null, no type filter
-     * (e.g. dashboard). When false and $questionSetType is 0 or 1, restrict to that type (admin list).
+     * Get question sets. When $applyUserProgressScope is true, $questionSetType scopes by question_sets.type
+     * (TYPE_PRACTICE or TYPE_MOCK_TEST) and eager-loads the current user's analytics. Completed practice sets
+     * remain in the practice list. When false (admin list), $questionSetType filters by question_sets.type.
+     * When $applyUserProgressScope is false and $questionSetType is null, no type filter (e.g. dashboard).
      */
     public function getQuestionSets(
         ?int $questionSetType = null,
@@ -495,18 +495,8 @@ class QuestionSetService
         if ($questionSetType === QuestionSet::TYPE_PRACTICE) {
             $query->where('type', QuestionSet::TYPE_PRACTICE)
                 ->with(['questionAnswers', 'analytics' => function ($q) {
-                    $q->where('user_id', Auth::id())
-                        ->where('practice_completed', false);
-                }])
-                ->where(function ($q) {
-                    $q->whereHas('analytics', function ($q2) {
-                        $q2->where('user_id', Auth::id())
-                            ->where('practice_completed', false);
-                    })
-                        ->orWhereDoesntHave('analytics', function ($q2) {
-                            $q2->where('user_id', Auth::id());
-                        });
-                });
+                    $q->where('user_id', Auth::id());
+                }]);
         }
 
         if ($questionSetType === QuestionSet::TYPE_MOCK_TEST) {
