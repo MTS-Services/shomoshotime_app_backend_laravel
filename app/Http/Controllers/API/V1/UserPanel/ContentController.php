@@ -9,12 +9,12 @@ use App\Services\ContentManagement\ContentService;
 use App\Services\ContentManagement\FlashCardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\Response;
-use Throwable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class ContentController extends Controller
 {
@@ -28,12 +28,11 @@ class ContentController extends Controller
         $this->flashCardService = $flashCardService;
     }
 
-
     public function stream(Request $request, string $filename)
     {
         $path = $filename;
 
-        if (!Storage::disk('public')->exists($path)) {
+        if (! Storage::disk('public')->exists($path)) {
             abort(404, 'Audio not found');
         }
 
@@ -44,7 +43,7 @@ class ContentController extends Controller
         $range = $request->header('Range');
 
         // No range request - use BinaryFileResponse
-        if (!$range) {
+        if (! $range) {
             $response = new BinaryFileResponse($fullPath);
             $response->headers->set('Content-Type', $mimeType);
             $response->headers->set('Accept-Ranges', 'bytes');
@@ -53,16 +52,17 @@ class ContentController extends Controller
             $response->headers->set('Cache-Control', 'public, max-age=31536000');
             $response->headers->set('Access-Control-Allow-Origin', '*');
             $response->headers->set('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
+
             return $response;
         }
 
         // Parse range header
-        if (!preg_match('/bytes=(\d+)-(\d*)/', $range, $matches)) {
+        if (! preg_match('/bytes=(\d+)-(\d*)/', $range, $matches)) {
             abort(416, 'Invalid range');
         }
 
         $start = intval($matches[1]);
-        $end = !empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
+        $end = ! empty($matches[2]) ? intval($matches[2]) : $fileSize - 1;
 
         // Ensure valid range
         if ($start >= $fileSize || $start < 0 || $end >= $fileSize) {
@@ -82,7 +82,7 @@ class ContentController extends Controller
             fseek($file, $start);
 
             $remaining = $length;
-            while ($remaining > 0 && !feof($file)) {
+            while ($remaining > 0 && ! feof($file)) {
                 $chunkSize = min(8192, $remaining);
                 $data = fread($file, $chunkSize);
                 if ($data === false) {
@@ -109,7 +109,7 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (!$user) {
+            if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $validator = Validator::make($request->all(), [
@@ -123,7 +123,7 @@ class ContentController extends Controller
             $contentId = $data['content_id'];
             $pageNumber = $data['page_number'];
             $content = $this->service->findContent($contentId);
-            if (!$content) {
+            if (! $content) {
                 return sendResponse(false, 'Content not found', null, Response::HTTP_NOT_FOUND);
             }
 
@@ -141,13 +141,15 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (!$user) {
+            if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $file_type = $request->input('file_type');
             $category = $request->input('category');
             $query = $this->service->getContents($category, $file_type);
-            $query->withCount('studyGuideActivities');
+            $query->withCount(['studyGuideActivities' => function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            }]);
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('title', $searchQuery)
@@ -170,13 +172,18 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (!$user) {
+            if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
 
             $category = $request->input('category');
             $query = $this->flashCardService->getFlashCards($category);
-            $query->withCount(['flashCardActivities', 'flashCards']);
+            $query->withCount([
+                'flashCards',
+                'flashCardActivities' => function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                },
+            ]);
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('title', $searchQuery)
@@ -200,7 +207,7 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (!$user) {
+            if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $validator = Validator::make($request->all(), [
@@ -214,7 +221,7 @@ class ContentController extends Controller
             $contentId = $data['content_id'];
             $cardId = $data['card_id'];
             $flashCard = $this->flashCardService->findFlashCard($contentId, $cardId);
-            if (!$flashCard) {
+            if (! $flashCard) {
                 return sendResponse(false, 'This flash card does not belong to the given content.', null, Response::HTTP_NOT_FOUND);
             }
             $this->flashCardService->storeNextQuestionData($user->id, $contentId, $cardId);
@@ -231,11 +238,11 @@ class ContentController extends Controller
     {
         try {
             $user = request()->user();
-            if (!$user) {
+            if (! $user) {
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $contentId = $request->input('content_id');
-            if (!$contentId) {
+            if (! $contentId) {
                 return sendResponse(false, 'content_id is required', null, Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
