@@ -29,7 +29,7 @@ class ContentResource extends JsonResource
             'is_publish' => $this->is_publish,
             'is_publish_label' => Content::getPublishList()[$this->is_publish] ?? 'N/A',
             'total_pages' => $this->total_pages,
-            'study_guide_activities_count' => $this->study_guide_activities_count ?? 0,
+            'study_guide_activities_count' => $this->studyGuidePagesReadCount(),
             'study_guide_percent_completed' => $this->studyGuidePercentCompleted(),
 
             'flash_card_activities_count' => $this->flash_card_activities_count ?? 0,
@@ -44,6 +44,27 @@ class ContentResource extends JsonResource
         ];
     }
 
+    private function studyGuidePagesReadCount(): int
+    {
+        $totalPages = (int) $this->total_pages;
+        if ($totalPages <= 0) {
+            return 0;
+        }
+
+        if ($this->relationLoaded('studyGuideActivities')) {
+            $count = $this->studyGuideActivities
+                ->where('page_number', '>=', 1)
+                ->where('page_number', '<=', $totalPages)
+                ->pluck('page_number')
+                ->unique()
+                ->count();
+        } else {
+            $count = (int) ($this->study_guide_activities_count ?? 0);
+        }
+
+        return $count;
+    }
+
     private function studyGuidePercentCompleted(): float
     {
         $totalPages = (int) $this->total_pages;
@@ -51,7 +72,7 @@ class ContentResource extends JsonResource
             return 0;
         }
 
-        $attemptedPages = (int) ($this->study_guide_activities_count ?? 0);
+        $attemptedPages = $this->studyGuidePagesReadCount();
 
         return min(100, round(($attemptedPages / $totalPages) * 100, 2));
     }
