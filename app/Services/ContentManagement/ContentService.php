@@ -18,6 +18,11 @@ class ContentService
 
     public function storeNextPageData(int $userId, int $contentId, int $pageNumber): ?StudyGuideActivity
     {
+        $content = Content::find($contentId);
+        if (! $content || $pageNumber < 1 || $pageNumber > (int) $content->total_pages) {
+            return null;
+        }
+
         $activity = StudyGuideActivity::where('user_id', $userId)
             ->where('content_id', $contentId)
             ->where('page_number', $pageNumber)
@@ -209,7 +214,7 @@ class ContentService
                     break;
                 }
 
-                $buffer = $carry.$chunk;
+                $buffer = $carry . $chunk;
                 $carryLength = strlen($carry);
                 $matches = [];
                 $matchedPages = preg_match_all($pattern, $buffer, $matches, PREG_OFFSET_CAPTURE);
