@@ -63,6 +63,43 @@ it('calculates study guide percent completed within total pages', function () {
     expect($data['study_guide_percent_completed'])->toBe(50.0);
 });
 
+it('calculates study guide percent from distinct pages read not duplicate rows', function () {
+    $data = contentResourceArray([
+        'study_guide_activities_count' => 5,
+        'total_pages' => 100,
+    ]);
+
+    expect($data['study_guide_percent_completed'])->toBe(5.0)
+        ->and($data['study_guide_activities_count'])->toBe(5);
+});
+
+it('ignores page numbers above total pages when activities are loaded', function () {
+    $content = new Content([
+        'id' => 69,
+        'sort_order' => 0,
+        'title' => 'The Liver',
+        'subtitle' => 'The Liver',
+        'category' => 'Abdomen',
+        'file' => 'contents/test.pdf',
+        'file_type' => 'pdf',
+        'type' => Content::TYPE_STUDY_GUIDE,
+        'is_publish' => Content::IS_PUBLISH,
+        'total_pages' => 52,
+    ]);
+
+    $content->setRelation('studyGuideActivities', collect([
+        (new \App\Models\StudyGuideActivity)->forceFill(['page_number' => 1]),
+        (new \App\Models\StudyGuideActivity)->forceFill(['page_number' => 84]),
+        (new \App\Models\StudyGuideActivity)->forceFill(['page_number' => 2]),
+        (new \App\Models\StudyGuideActivity)->forceFill(['page_number' => 84]),
+    ]));
+
+    $data = (new ContentResource($content))->toArray(Request::create('/'));
+
+    expect($data['study_guide_activities_count'])->toBe(2)
+        ->and($data['study_guide_percent_completed'])->toBe(3.85);
+});
+
 it('caps flash card percent completed at 100', function () {
     $data = contentResourceArray([
         'type' => Content::TYPE_FLASHCARD,

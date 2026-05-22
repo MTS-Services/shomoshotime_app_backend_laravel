@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1\UserPanel;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\ContentResource;
 use App\Http\Resources\API\V1\FlashCardResource;
+use App\Models\StudyGuideActivity;
 use App\Services\ContentManagement\ContentService;
 use App\Services\ContentManagement\FlashCardService;
 use Illuminate\Http\Request;
@@ -127,7 +128,20 @@ class ContentController extends Controller
                 return sendResponse(false, 'Content not found', null, Response::HTTP_NOT_FOUND);
             }
 
+            if ($pageNumber > (int) $content->total_pages) {
+                return sendResponse(
+                    false,
+                    'Page number cannot exceed total pages (' . $content->total_pages . ').',
+                    null,
+                    Response::HTTP_UNPROCESSABLE_ENTITY
+                );
+            }
+
             $nextPageNumber = $this->service->storeNextPageData($user->id, $contentId, $pageNumber);
+
+            if (! $nextPageNumber) {
+                return sendResponse(false, 'Invalid page number for this content.', null, Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
 
             return sendResponse(true, 'Next page data stored successfully.', $nextPageNumber, Response::HTTP_OK);
         } catch (Throwable $e) {
@@ -147,9 +161,16 @@ class ContentController extends Controller
             $file_type = $request->input('file_type');
             $category = $request->input('category');
             $query = $this->service->getContents($category, $file_type);
-            $query->withCount(['studyGuideActivities' => function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            }]);
+            $query->select('contents.*');
+            $query->selectSub(
+                StudyGuideActivity::query()
+                    ->selectRaw('count(distinct study_guide_activities.page_number)')
+                    ->whereColumn('study_guide_activities.content_id', 'contents.id')
+                    ->where('study_guide_activities.user_id', $user->id)
+                    ->where('study_guide_activities.page_number', '>=', 1)
+                    ->whereColumn('study_guide_activities.page_number', '<=', 'contents.total_pages'),
+                'study_guide_activities_count'
+            );
             if ($request->has('search')) {
                 $searchQuery = $request->input('search');
                 $query->whereLike('title', $searchQuery)
