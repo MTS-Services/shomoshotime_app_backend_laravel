@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1\UserPanel;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\API\V1\ContentResource;
 use App\Http\Resources\API\V1\FlashCardResource;
+use App\Models\Content;
 use App\Models\StudyGuideActivity;
 use App\Services\ContentManagement\ContentService;
 use App\Services\ContentManagement\FlashCardService;
@@ -159,8 +160,8 @@ class ContentController extends Controller
                 return sendResponse(false, 'Unauthorized', null, Response::HTTP_UNAUTHORIZED);
             }
             $file_type = $request->input('file_type');
-            $category = $request->input('category');
-            $query = $this->service->getContents($category, $file_type);
+            $category = $request->filled('category') ? $request->input('category') : null;
+            $query = $this->service->getContents(Content::TYPE_STUDY_GUIDE, $file_type, $category);
             $query->select('contents.*');
             $query->selectSub(
                 StudyGuideActivity::query()
@@ -171,10 +172,12 @@ class ContentController extends Controller
                     ->whereColumn('study_guide_activities.page_number', '<=', 'contents.total_pages'),
                 'study_guide_activities_count'
             );
-            if ($request->has('search')) {
+            if ($request->filled('search')) {
                 $searchQuery = $request->input('search');
-                $query->whereLike('title', $searchQuery)
-                    ->orWhereLike('subtitle', $searchQuery);
+                $query->where(function ($builder) use ($searchQuery) {
+                    $builder->whereLike('title', $searchQuery)
+                        ->orWhereLike('subtitle', $searchQuery);
+                });
                 $contents = $query->paginate($request->input('per_page', 10));
 
                 return sendResponse(true, 'Search data fetched successfully.', ContentResource::collection($contents), Response::HTTP_OK);
