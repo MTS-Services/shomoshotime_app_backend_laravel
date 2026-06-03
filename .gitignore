@@ -8,7 +8,8 @@
 /vendor
 !.env.example
 .git-rewrite/
-.env.backup
+!.env.example
+.env.*.backup
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -22,6 +23,8 @@ yarn-error.log
 /.vscode
 /.zed
 
-config.bat
+
+branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
+config.bat
